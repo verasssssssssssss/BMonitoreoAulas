@@ -534,7 +534,47 @@ app.post('/datos/registrar', function (req, res) {
   }
 });
 
+//ID = random - POST = verifica si el aula esta reservada ¿?
+app.get('/aula/validacion/reserva', function (req, res) {
+  let IdSensor=req.body.IdSensor; 
+  let IdBlocke=req.body.IdBlocke; 
+  let fecha=req.body.fecha;
+  mc.query('SELECT reserva.IdReserva FROM sensor INNER JOIN reserva ON sensor.IdAula = reserva.IdAula AND reserva.Fecha = ? INNER JOIN contiene ON reserva.IdReserva = contiene.IdReserva AND contiene.IdBloque = ? WHERE sensor.IdSensor = ?',[fecha, IdBlocke,IdSensor], function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'listado de todos las carreras segun la sede'
+      });
+  });
+});
 
+
+//ID = random - GET = obtener el estado de uso del aula
+app.get('/reserva/Obtener/:IdReserva', function (req, res) {
+  let IdReserva = req.params.IdReserva;
+  mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?',IdReserva, function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'Estado de uso del aula'
+      });
+  });
+});
+
+//ID = random - PUT = editar estado de uso del aula
+app.put('/reserva/editar/:IdReserva', function (req, res) {
+  let IdReserva = req.params.IdReserva;
+  mc.query('UPDATE reserva SET reserva.EnUso = 0 WHERE reserva.IdReserva = ?',IdReserva, function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'Se aeditado el estado de la reserva'
+      });
+  });
+});
 
 //Rutass
 app.get("/", (req, res, next) => {
