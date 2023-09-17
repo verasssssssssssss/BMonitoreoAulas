@@ -307,7 +307,8 @@ app.post('/aula/crear', function (req, res) {
   let datosAula = {
     NomAula:req.body.NomAula, 
     IdArea:req.body.IdArea, 
-    CantidadAlumnos	:req.body.CantidadAlumnos	
+    CantidadAlumnos	:req.body.CantidadAlumnos,	
+    Visible:1,
   };
   console.log(datosAula);
   if (mc) {
@@ -328,7 +329,6 @@ app.put('/aula/editar/:IdAula', (req, res) => {
   let IdAula = req.params.IdAula;
   let datosAula = {
     NomAula:req.body.NomAula, 
-    IdArea:req.body.IdArea, 
     CantidadAlumnos	:req.body.CantidadAlumnos	
   };
   if (!IdAula) {
