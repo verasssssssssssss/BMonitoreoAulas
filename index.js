@@ -99,6 +99,21 @@ app.post("/usuario/session", (req, res) => {
   );
 });
 
+
+//ID = random - GET = Nombre de la Ciudad segun id
+app.get('/sede/obtener/:IdCiudad', function (req, res) {
+  let IdCiudad = req.params.IdCiudad;
+  mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?',IdCiudad, function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'Nombre de la ciudad segun id'
+      });
+  });
+});
+
+
 //ID = random - GET = listado de sedes segun la ciudad
 app.get('/sede/listado/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
@@ -115,7 +130,7 @@ app.get('/sede/listado/:IdCiudad', function (req, res) {
 //ID = 2 y 4 - GET = listado de areas de trabajo 
 app.get('/area/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar INNER JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario WHERE ar.IdSede = ? AND ar.Visible = 1',IdSede, function (error, results, fields) {
+  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario WHERE ar.IdSede = ? AND ar.Visible = 1',IdSede, function (error, results, fields) {
       if (error) throw error;
       return res.send({
           error: false,
