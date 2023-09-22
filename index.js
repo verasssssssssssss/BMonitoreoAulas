@@ -51,7 +51,7 @@ mc.connect();
 // sensores
 /////////////////////////////////////////////////////////////
 
-//ID = 1 - POST = Iniciar sessión 
+//ID = 1 - POST = Iniciar sessión *
 app.post("/usuario/session", (req, res) => {
   let Mail= req.body.Mail;
   let Contrasenia = req.body.Contrasenia;
@@ -99,8 +99,7 @@ app.post("/usuario/session", (req, res) => {
   );
 });
 
-
-//ID = random - GET = Nombre de la Ciudad segun id
+//ID = random - GET = Nombre de la Ciudad segun id *
 app.get('/sede/obtener/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
   mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?',IdCiudad, function (error, results, fields) {
@@ -113,8 +112,7 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
   });
 });
 
-
-//ID = random - GET = listado de sedes segun la ciudad
+//ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
   mc.query('SELECT sede.IdSede,sede.NomSede FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?',IdCiudad, function (error, results, fields) {
@@ -127,10 +125,24 @@ app.get('/sede/listado/:IdCiudad', function (req, res) {
   });
 });
 
-//ID = 2 y 4 - GET = listado de areas de trabajo 
+//ID = random - GET = Datos de encargado de aula segun id *
+app.get('/encargado/obtener/:IdUsuario', function (req, res) {
+  let IdUsuario = req.params.IdUsuario;
+  mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Mail, Contrasenia FROM usuario WHERE IdUsuario = ?',IdUsuario, function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'Datos de encargado de aula segun id '+IdUsuario
+      });
+  });
+});
+
+
+//ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede *
 app.get('/area/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario WHERE ar.IdSede = ? AND ar.Visible = 1',IdSede, function (error, results, fields) {
+  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1',IdSede, function (error, results, fields) {
       if (error) throw error;
       return res.send({
           error: false,
@@ -140,10 +152,10 @@ app.get('/area/listado/:IdSede', function (req, res) {
   });
 });
 
-//ID = 3 - GET = listado de todos los encargados de aulas 
+//ID = 3 - GET = listado de todos los encargados de aulas segun la sede *
 app.get('/encargado/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario FROM usuario WHERE IdRol = 2 AND IdSede = ?',IdSede, function (error, results, fields) {
+  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2 AND IdSede = ?',IdSede, function (error, results, fields) {
       if (error) throw error;
       return res.send({
           error: false,
@@ -153,7 +165,7 @@ app.get('/encargado/listado/:IdSede', function (req, res) {
   });
 });
 
-//ID = 5 - GET = listado de todas las aulas de un área 
+//ID = 5 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/:IdArea', function (req, res) {
   let IdArea = req.params.IdArea;
   mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1',IdArea, function (error, results, fields) {
@@ -209,7 +221,7 @@ app.put('/encargado/editar/:IdUsuario', (req, res) => {
   });
 });
 
-//ID = 8 - PUT = eliminar encargado de aula 
+//ID = 8 - PUT = eliminar encargado de aula *
 app.put('/encargado/eliminar/:IdUsuario', (req, res) => {
   let IdUsuario = req.params.IdUsuario;
 
@@ -219,7 +231,7 @@ app.put('/encargado/eliminar/:IdUsuario', (req, res) => {
   });
 });
 
-//ID = 9 - POST = crear area de trabajo 
+//ID = 9 - POST = crear area de trabajo *
 app.post('/area/crear', function (req, res) {
   let datosAreaDeTrabajo = {
     NomArea:req.body.NomArea, 
@@ -240,13 +252,11 @@ app.post('/area/crear', function (req, res) {
   }
 });
 
-//ID = 10 - PUT = editar area de trabajo 
+//ID = 10 - PUT = editar area de trabajo *
 app.put('/area/editar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
-    NomArea:req.body.NomArea, 
-    IdSede:req.body.IdSede,
-    Visible:1,  
+    NomArea:req.body.NomArea,  
   };
   if (!IdArea) {
       return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
@@ -257,7 +267,7 @@ app.put('/area/editar/:IdArea', (req, res) => {
   });
 });
 
-//ID = 11 - PUT = "Elminar" área de trabajo 
+//ID = 11 - PUT = "Elminar" área de trabajo *
 app.put('/area/eliminar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
@@ -272,7 +282,7 @@ app.put('/area/eliminar/:IdArea', (req, res) => {
   });
 });
 
-//ID = 12 - PUT = asignar área de trabajo 
+//ID = 12 - PUT = asignar área de trabajo *
 app.put('/area/asignar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
@@ -287,7 +297,7 @@ app.put('/area/asignar/:IdArea', (req, res) => {
   });
 });
 
-//ID = 13 - PUT = delegar área de trabajo 
+//ID = 13 - PUT = delegar área de trabajo *
 app.put('/area/delegar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
@@ -302,7 +312,7 @@ app.put('/area/delegar/:IdArea', (req, res) => {
   });
 });
 
-//ID = 14 - POST = Registar una nueva aula  
+//ID = 14 - POST = Registar una nueva aula  *
 app.post('/aula/crear', function (req, res) {
   let datosAula = {
     NomAula:req.body.NomAula, 
@@ -324,7 +334,7 @@ app.post('/aula/crear', function (req, res) {
   }
 });
 
-//ID = 15 - PUT = editar aula 
+//ID = 15 - PUT = editar aula *
 app.put('/aula/editar/:IdAula', (req, res) => {
   let IdAula = req.params.IdAula;
   let datosAula = {
@@ -340,7 +350,7 @@ app.put('/aula/editar/:IdAula', (req, res) => {
   });
 });
 
-//ID = 16 - PUT = eliminar aula 
+//ID = 16 - PUT = eliminar aula *
 app.put('/aula/eliminar/:IdAula', (req, res) => {
   let IdAula = req.params.IdAula;
   let datosAula = {
