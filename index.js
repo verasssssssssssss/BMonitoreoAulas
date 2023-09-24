@@ -138,6 +138,15 @@ app.get('/encargado/obtener/:IdUsuario', function (req, res) {
   });
 });
 
+//ID = random - PUT = eliminar encargado de una area segun id encargado *
+app.put('/area/quitar/:IdUsuario', (req, res) => {
+  let IdUsuario  = req.params.IdUsuario;
+  mc.query("UPDATE areatrabajo SET IdUsuario=NULL WHERE IdUsuario  = ?", IdUsuario , function (error, results, fields) {
+      if (error) throw error;
+      return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + IdUsuario  + " ha quedado sin encargado" });
+  });
+});
+
 
 //ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede *
 app.get('/area/listado/:IdSede', function (req, res) {
@@ -534,6 +543,20 @@ app.get('/carreras/listado/:IdSede', function (req, res) {
       });
   });
 });
+
+//ID = random - DELETE = eliminar reporte
+app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
+  let Idreporte = req.params.Idreporte;
+  mc.query('DELETE FROM reporte WHERE Idreporte = ?',Idreporte, function (error, results, fields) {
+      if (error) throw error;
+      return res.send({
+          error: false,
+          data: results,
+          message: 'Reporte eliminado correctamente'
+      });
+  });
+});
+
 //ID = 26 - POST = insertar datos 
 app.post('/datos/registrar', function (req, res) {
   let datosDatos = { 
