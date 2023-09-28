@@ -1,10 +1,54 @@
 const express = require("express");
 const app = express();
+const nodemailer = require("nodemailer");
+const{google} = require("googleapis");
 const cors = require("cors");
 
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
+
+const OAuth2 = google.auth.OAuth2;
+const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
+const CLIENT_SECRET = "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";
+const REDIRECT_URI = "https://developers.google.com/oauthplayground";
+const REFRESH_TOKEN = "1//04sQc0x2YT7qrCgYIARAAGAQSNwF-L9IrH2eVJR9E8SEJ7jEBWxvfakuYJQzKLdmbFSxkuLpDfYv5_srxpnVm5FxX0G7xOj_6Yi8";
+
+const oauth2Client = new OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+const accessToken = oauth2Client.getAccessToken();
+
+const smtpTransport = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    type: "OAuth2",
+    user: "monitoreoaulas@gmail.com",
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    refreshToken: REFRESH_TOKEN,
+    accessToken: accessToken,
+  }
+});
+
+let msg = `Esto es una prueba 
+            <h1>HOLA MUNDO<h1>
+            <img src="https://lastfm.freetls.fastly.net/i/u/ar0/bca68e9dcf9585867a13f6130194c9cc.jpg">`;
+
+
+const mailOptions = {
+  from: "monitoreoaulas@gmail.com",
+  to: "sebastian.vera1901@alumnos.ubiobio.cl",
+  subject: "PRUEBA ENVIO DE MAILS SOY EL JOAQUIN AYUDA ME QUEDE ATRAPADO EN EL COMPUTADOR",
+  generateTextFromHTML: true,
+  html: msg
+};
+
+
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -623,6 +667,26 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
       });
   });
 });
+
+
+
+
+
+app.post('/enviarcorreo', function (req, res) {
+  if (mc){
+
+
+    //EL SMTPTRANSPORT ES EL QUE ENVIA EL CORREO, ESTA AQUI PA QUE NO SE ENVIE UN CORREO CADA VEZ QUE HACES UN CAMBIO EN EL BACK
+    smtpTransport.sendMail(mailOptions, (error, response)=>{
+      error ? console.log(error) : console.log(response);
+      smtpTransport.close();
+    });
+
+
+
+  }
+});
+
 
 //Rutass
 app.get("/", (req, res, next) => {
