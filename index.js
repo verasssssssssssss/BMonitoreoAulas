@@ -1,12 +1,13 @@
 const express = require("express");
 const app = express();
 const nodemailer = require("nodemailer");
-const{google} = require("googleapis");
+const { google } = require("googleapis");
 const cors = require("cors");
 
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
+var bcrypt = require("bcrypt");
 
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
@@ -97,97 +98,97 @@ mc.connect();
 
 //ID = 1 - POST = Iniciar sessión *
 app.post("/usuario/session", (req, res) => {
-  let Mail= req.body.Mail;
+  let Mail = req.body.Mail;
   let Contrasenia = req.body.Contrasenia;
 
-  mc.query("SELECT * FROM usuario WHERE Mail= ?",Mail,function (err, results, fields) {
-      if (err) {
-        return res.status(500).json({
-          ok: false,
-          mensaje: "Error al buscar usuario",
-          errors: err,
-        });
-      }
-      let Usuario = {
-        IdUsuario: results[0].IdUsuario,
-        NomUsuario: results[0].NomUsuario,
-        ApeUsuario: results[0].ApeUsuario,
-        Mail: results[0].Mail,
-        IdRol: results[0].IdRol,
-        IdSede: results[0].IdSede,
-        IdCarrera: results[0].IdCarrera,
-        IdCiudad: results[0].IdCiudad
-      };
-      if (!results.length) {
-        return res.status(400).json({
-          ok: false,
-          mensaje: "Credenciales incorrectas",
-          errors: err,
-        });
-      }
-        if(results[0].Contrasenia == Contrasenia){
-          return res.status(200).json({
-            ok: true,
-            mensaje: "usuario logueado correctamente",
-            data: Usuario,
-            errors: err
-          })
-        }else{
-          return res.status(400).json({
-            ok:false,
-            mensaje: "Credenciales incorrectas",
-            errors: err
-          })
-        }
+  mc.query("SELECT * FROM usuario WHERE Mail= ?", Mail, function (err, results, fields) {
+    if (err) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: "Error al buscar usuario",
+        errors: err,
+      });
     }
+    let Usuario = {
+      IdUsuario: results[0].IdUsuario,
+      NomUsuario: results[0].NomUsuario,
+      ApeUsuario: results[0].ApeUsuario,
+      Mail: results[0].Mail,
+      IdRol: results[0].IdRol,
+      IdSede: results[0].IdSede,
+      IdCarrera: results[0].IdCarrera,
+      IdCiudad: results[0].IdCiudad
+    };
+    if (!results.length) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "Credenciales incorrectas",
+        errors: err,
+      });
+    }
+    if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+      return res.status(200).json({
+        ok: true,
+        mensaje: "usuario logueado correctamente",
+        data: Usuario,
+        errors: err
+      })
+    } else {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "Credenciales incorrectas",
+        errors: err
+      })
+    }
+  }
   );
 });
 
 //ID = random - GET = Nombre de la Ciudad segun id *
 app.get('/sede/obtener/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
-  mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?',IdCiudad, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Nombre de la ciudad segun id'
-      });
+  mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Nombre de la ciudad segun id'
+    });
   });
 });
 
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
-  mc.query('SELECT sede.IdSede,sede.NomSede FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?',IdCiudad, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Listado de sedes segun la ciudad'
-      });
+  mc.query('SELECT sede.IdSede,sede.NomSede FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Listado de sedes segun la ciudad'
+    });
   });
 });
 
 //ID = random - GET = Datos de encargado de aula segun id *
 app.get('/encargado/obtener/:IdUsuario', function (req, res) {
   let IdUsuario = req.params.IdUsuario;
-  mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Mail, Contrasenia FROM usuario WHERE IdUsuario = ?',IdUsuario, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Datos de encargado de aula segun id '+IdUsuario
-      });
+  mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Mail, Contrasenia FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Datos de encargado de aula segun id ' + IdUsuario
+    });
   });
 });
 
 //ID = random - PUT = eliminar encargado de una area segun id encargado *
 app.put('/area/quitar/:IdUsuario', (req, res) => {
-  let IdUsuario  = req.params.IdUsuario;
-  mc.query("UPDATE areatrabajo SET IdUsuario=NULL WHERE IdUsuario  = ?", IdUsuario , function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + IdUsuario  + " ha quedado sin encargado" });
+  let IdUsuario = req.params.IdUsuario;
+  mc.query("UPDATE areatrabajo SET IdUsuario=NULL WHERE IdUsuario  = ?", IdUsuario, function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + IdUsuario + " ha quedado sin encargado" });
   });
 });
 
@@ -195,63 +196,63 @@ app.put('/area/quitar/:IdUsuario', (req, res) => {
 //ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede *
 app.get('/area/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Áreas de trabajo registradas en la sede'
-      });
+  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Áreas de trabajo registradas en la sede'
+    });
   });
 });
 
 //ID = 3 - GET = listado de todos los encargados de aulas segun la sede *
 app.get('/encargado/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2 AND IdSede = ?',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'listado de todos los encargados de aulas de la sede'
-      });
+  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2 AND IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todos los encargados de aulas de la sede'
+    });
   });
 });
 
 //ID = 5 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/:IdArea', function (req, res) {
   let IdArea = req.params.IdArea;
-  mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1',IdArea, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'listado de todas las aulas de un área'
-      });
+  mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todas las aulas de un área'
+    });
   });
 });
 
 //ID = 6 - POST = crear encargado de aula 
 app.post('/encargado/crear', function (req, res) {
   let datosEncargado = {
-    NomUsuario:req.body.NomUsuario, 
-    ApeUsuario:req.body.ApeUsuario, 
-    Mail:req.body.Mail, 
-    Contrasenia:req.body.Contrasenia, 
-    IdRol:2, 
-    IdSede:req.body.IdSede,
+    NomUsuario: req.body.NomUsuario,
+    ApeUsuario: req.body.ApeUsuario,
+    Mail: req.body.Mail,
+    Contrasenia: bcrypt.hashSync(req.body.Contrasenia, 10),
+    IdRol: 2,
+    IdSede: req.body.IdSede,
   };
   console.log(datosEncargado);
   if (mc) {
-      mc.query("INSERT INTO usuario SET ?", datosEncargado, function (error, results) {
-          if (error) {
-              console.log(nofincona);
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO usuario SET ?", datosEncargado, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
@@ -259,18 +260,18 @@ app.post('/encargado/crear', function (req, res) {
 app.put('/encargado/editar/:IdUsuario', (req, res) => {
   let IdUsuario = req.params.IdUsuario;
   let datosEncargado = {
-    NomUsuario:req.body.NomUsuario, 
-    ApeUsuario:req.body.ApeUsuario, 
-    Mail:req.body.Mail, 
-    Contrasenia:req.body.Contrasenia, 
-    IdSede:req.body.IdSede,
+    NomUsuario: req.body.NomUsuario,
+    ApeUsuario: req.body.ApeUsuario,
+    Mail: req.body.Mail,
+    Contrasenia: req.body.Contrasenia,
+    IdSede: req.body.IdSede,
   };
   if (!IdUsuario) {
-      return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
   }
-  mc.query("UPDATE usuario SET ? WHERE IdUsuario = ?", [datosEncargado,IdUsuario], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El encargado de aula con id = " + IdUsuario + " ha sido actualizado" });
+  mc.query("UPDATE usuario SET ? WHERE IdUsuario = ?", [datosEncargado, IdUsuario], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El encargado de aula con id = " + IdUsuario + " ha sido actualizado" });
   });
 });
 
@@ -279,29 +280,29 @@ app.put('/encargado/eliminar/:IdUsuario', (req, res) => {
   let IdUsuario = req.params.IdUsuario;
 
   mc.query("UPDATE usuario SET IdRol=4 WHERE IdUsuario = ?", IdUsuario, function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El encargado de aula con id = " + IdUsuario + " ha sido eliminado" });
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El encargado de aula con id = " + IdUsuario + " ha sido eliminado" });
   });
 });
 
 //ID = 9 - POST = crear area de trabajo *
 app.post('/area/crear', function (req, res) {
   let datosAreaDeTrabajo = {
-    NomArea:req.body.NomArea, 
-    IdSede:req.body.IdSede, 
-    Visible:1, 
+    NomArea: req.body.NomArea,
+    IdSede: req.body.IdSede,
+    Visible: 1,
   };
   console.log(datosAreaDeTrabajo);
   if (mc) {
-      mc.query("INSERT INTO areatrabajo SET ?", datosAreaDeTrabajo, function (error, results) {
-          if (error) {
-              console.log(nofincona);
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO areatrabajo SET ?", datosAreaDeTrabajo, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
@@ -309,14 +310,14 @@ app.post('/area/crear', function (req, res) {
 app.put('/area/editar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
-    NomArea:req.body.NomArea,  
+    NomArea: req.body.NomArea,
   };
   if (!IdArea) {
-      return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
   }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea,IdArea], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
+  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
   });
 });
 
@@ -324,14 +325,14 @@ app.put('/area/editar/:IdArea', (req, res) => {
 app.put('/area/eliminar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
-    Visible:0, 
+    Visible: 0,
   };
   if (!IdArea) {
-      return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
   }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea,IdArea], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
+  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
   });
 });
 
@@ -339,14 +340,14 @@ app.put('/area/eliminar/:IdArea', (req, res) => {
 app.put('/area/asignar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
-    IdUsuario:req.body.IdUsuario,  
+    IdUsuario: req.body.IdUsuario,
   };
   if (!IdArea) {
-      return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
   }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea,IdArea], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
+  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
   });
 });
 
@@ -354,36 +355,36 @@ app.put('/area/asignar/:IdArea', (req, res) => {
 app.put('/area/delegar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
-    IdUsuario:null,  
+    IdUsuario: null,
   };
   if (!IdArea) {
-      return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
   }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea,IdArea], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
+  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
   });
 });
 
 //ID = 14 - POST = Registar una nueva aula  *
 app.post('/aula/crear', function (req, res) {
   let datosAula = {
-    NomAula:req.body.NomAula, 
-    IdArea:req.body.IdArea, 
-    CantidadAlumnos	:req.body.CantidadAlumnos,	
-    Visible:1,
+    NomAula: req.body.NomAula,
+    IdArea: req.body.IdArea,
+    CantidadAlumnos: req.body.CantidadAlumnos,
+    Visible: 1,
   };
   console.log(datosAula);
   if (mc) {
-      mc.query("INSERT INTO aula SET ?", datosAula, function (error, results) {
-          if (error) {
-              console.log(nofincona);
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO aula SET ?", datosAula, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
@@ -391,15 +392,15 @@ app.post('/aula/crear', function (req, res) {
 app.put('/aula/editar/:IdAula', (req, res) => {
   let IdAula = req.params.IdAula;
   let datosAula = {
-    NomAula:req.body.NomAula, 
-    CantidadAlumnos	:req.body.CantidadAlumnos	
+    NomAula: req.body.NomAula,
+    CantidadAlumnos: req.body.CantidadAlumnos
   };
   if (!IdAula) {
-      return res.status(400).send({ message: 'Debe proveer el id de una aula existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una aula existente' });
   }
-  mc.query("UPDATE aula SET ? WHERE IdAula = ?", [datosAula,IdAula], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El aula con id = " + IdAula + " ha sido actualizado" });
+  mc.query("UPDATE aula SET ? WHERE IdAula = ?", [datosAula, IdAula], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El aula con id = " + IdAula + " ha sido actualizado" });
   });
 });
 
@@ -407,35 +408,35 @@ app.put('/aula/editar/:IdAula', (req, res) => {
 app.put('/aula/eliminar/:IdAula', (req, res) => {
   let IdAula = req.params.IdAula;
   let datosAula = {
-    Visible:0, 
+    Visible: 0,
   };
   if (!IdAula) {
-      return res.status(400).send({ message: 'Debe proveer el id de una aula existente' });
+    return res.status(400).send({ message: 'Debe proveer el id de una aula existente' });
   }
-  mc.query("UPDATE aula SET ? WHERE IdAula = ?", [datosAula,IdAula], function (error, results, fields) {
-      if (error) throw error;
-      return res.status(200).json({ "Mensaje": "El aula con id = " + IdAula + " ha sido actualizado" });
+  mc.query("UPDATE aula SET ? WHERE IdAula = ?", [datosAula, IdAula], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "El aula con id = " + IdAula + " ha sido actualizado" });
   });
 });
 
 //ID = 17 - POST = Registar un nuevo sensor 
 app.post('/sensor/crear', function (req, res) {
   let datosSensor = {
-    FechaInstalacion:req.body.FechaInstalacion, 
-    FechaMantenimiento:req.body.FechaInstalacion, 
-    IdAula:req.body.IdAula, 
+    FechaInstalacion: req.body.FechaInstalacion,
+    FechaMantenimiento: req.body.FechaInstalacion,
+    IdAula: req.body.IdAula,
   };
   console.log(datosSensor);
   if (mc) {
-      mc.query("INSERT INTO sensor SET ?", datosSensor, function (error, results) {
-          if (error) {
-              console.log(nofincona);
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO sensor SET ?", datosSensor, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
@@ -443,55 +444,55 @@ app.post('/sensor/crear', function (req, res) {
 app.put('/sensor/editar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
   let datosSensor = {
-    FechaMantenimiento:req.body.FechaMantenimiento, 
-    IdAula:req.body.IdAula, 
+    FechaMantenimiento: req.body.FechaMantenimiento,
+    IdAula: req.body.IdAula,
   };
-  mc.query('UPDATE sensor SET ? WHERE IdSensor = ?',[datosSensor,IdSede], function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'sensor editado correctamente'
-      });
+  mc.query('UPDATE sensor SET ? WHERE IdSensor = ?', [datosSensor, IdSede], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'sensor editado correctamente'
+    });
   });
 });
 
 //ID = 19 - DELETE = eliminar sensor 
 app.delete('/sensor/eliminar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('DELETE FROM sensor WHERE IdSensor = ?',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'sensor eliminado correctamente'
-      });
+  mc.query('DELETE FROM sensor WHERE IdSensor = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'sensor eliminado correctamente'
+    });
   });
 });
 
 //ID = 20 - GET = obtener datos ambientales de una determinada aula 
 app.get('/aulas/detalle/:IdAula', function (req, res) {
   let IdAula = req.params.IdAula;
-  mc.query('SELECT datos.IntensidadLuminica, datos.NivelesDeCO2, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor AND sensor.IdAula = ? LIMIT 10',IdAula, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'obtener datos ambientales del aula con id '+IdAula
-      });
+  mc.query('SELECT datos.IntensidadLuminica, datos.NivelesDeCO2, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor AND sensor.IdAula = ? LIMIT 10', IdAula, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'obtener datos ambientales del aula con id ' + IdAula
+    });
   });
 });
 
 //ID = 21 - GET = obtener alerta de desuso de aula 
 app.get('/reporte/obtener/:IdArea', function (req, res) {
   let IdArea = req.params.IdArea;
-  mc.query('SELECT  aula.NomAula, datos.IdDatos, datos.CapturaFotografica FROM areatrabajo  INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea AND  areatrabajo.IdArea = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1',IdArea, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Obtener alerta de desuso de aula'
-      });
+  mc.query('SELECT  aula.NomAula, datos.IdDatos, datos.CapturaFotografica FROM areatrabajo  INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea AND  areatrabajo.IdArea = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1', IdArea, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Obtener alerta de desuso de aula'
+    });
   });
 });
 
@@ -499,51 +500,51 @@ app.get('/reporte/obtener/:IdArea', function (req, res) {
 app.put('/reporte/validar', function (req, res) {
   let IdDatos = req.body.IdDatos;
   let validacion = req.body.validacion;
-  mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?',[validacion,IdDatos], function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Se valido la alera de desuso de aula correctamente'
-      });
+  mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?', [validacion, IdDatos], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se valido la alera de desuso de aula correctamente'
+    });
   });
 });
 
 //ID = random - GET = Obtener datos de la coordinadora de aula segun la sede
 app.get('/obtener/datos/coordinadora/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT usuario.NomUsuario, usuario.ApeUsuario,usuario.Mail FROM sede  INNER JOIN usuario ON sede.IdCiudad = usuario.IdCiudad AND sede.IdSede = ?',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Datos de la coordinadora de aula segun la sede'
-      });
+  mc.query('SELECT usuario.NomUsuario, usuario.ApeUsuario,usuario.Mail FROM sede  INNER JOIN usuario ON sede.IdCiudad = usuario.IdCiudad AND sede.IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Datos de la coordinadora de aula segun la sede'
+    });
   });
 });
 
 //ID = 22 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear', function (req, res) {
-  let datosReporte = { 
-    NomCurso:req.body.NomCurso, 
-    NomProfesor:req.body.NomProfesor, 
-    FechaReporte:req.body.FechaReporte, 
-    IdCarrera:req.body.IdCarrera, 
-    IdUsuario:req.body.IdUsuario, 
-    IdAula:req.body.IdAula, 
-    IdDatos:req.body.IdDatos, 
+  let datosReporte = {
+    NomCurso: req.body.NomCurso,
+    NomProfesor: req.body.NomProfesor,
+    FechaReporte: req.body.FechaReporte,
+    IdCarrera: req.body.IdCarrera,
+    IdUsuario: req.body.IdUsuario,
+    IdAula: req.body.IdAula,
+    IdDatos: req.body.IdDatos,
   };
   console.log(datosReporte);
   if (mc) {
-      mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
-          if (error) {
-              console.log(nofincona);
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
@@ -552,92 +553,92 @@ app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
   let IdCarrera = req.body.IdCarrera;
 
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario',[IdSede, IdCarrera], function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'listado de reportes de una sede segun la carrera universitaria'
-      });
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario', [IdSede, IdCarrera], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de reportes de una sede segun la carrera universitaria'
+    });
   });
 });
 
 //ID = 23 - GET = listado de todos los reportes segun la sede 
 app.get('/reporte/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario INNER JOIN datos ON datos.IdDatos = rep.IdDatos',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Listado de todos los reportes segun la sede'
-      });
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario INNER JOIN datos ON datos.IdDatos = rep.IdDatos', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Listado de todos los reportes segun la sede'
+    });
   });
 });
 
 //ID = 24 - GET = listado de todos las carreras segun la sede *
 app.get('/carreras/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?',IdSede, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'listado de todos las carreras segun la sede'
-      });
+  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todos las carreras segun la sede'
+    });
   });
 });
 
 //ID = random - DELETE = eliminar reporte
 app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
   let Idreporte = req.params.Idreporte;
-  mc.query('DELETE FROM reporte WHERE Idreporte = ?',Idreporte, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Reporte eliminado correctamente'
-      });
+  mc.query('DELETE FROM reporte WHERE Idreporte = ?', Idreporte, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Reporte eliminado correctamente'
+    });
   });
 });
 
 //ID = 26 - POST = insertar datos 
 app.post('/datos/registrar', function (req, res) {
-  let datosDatos = { 
-      Fecha:req.body.Fecha, 
-      Reportado:req.body.Reportado, 
-      Correcto:req.body.Correcto, 
-      IntensidadLuminica:req.body.IntensidadLuminica, 
-      NivelesDeCO2:req.body.NivelesDeCO2, 
-      Temperatura:req.body.Temperatura, 
-      Humedad:req.body.Humedad, 
-      IdSensor:req.body.IdSensor, 
-    };
-  
+  let datosDatos = {
+    Fecha: req.body.Fecha,
+    Reportado: req.body.Reportado,
+    Correcto: req.body.Correcto,
+    IntensidadLuminica: req.body.IntensidadLuminica,
+    NivelesDeCO2: req.body.NivelesDeCO2,
+    Temperatura: req.body.Temperatura,
+    Humedad: req.body.Humedad,
+    IdSensor: req.body.IdSensor,
+  };
+
   if (mc) {
-      mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
-          if (error) {
-              res.status(500).json({ "Mensaje": "Error" });
-          }
-          else {
-              res.status(201).json({ "Mensaje": "Insertado" });
-          }
-      });
+    mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
   }
 });
 
 //ID = random - POST = verifica si el aula esta reservada ¿?
 app.get('/aula/validacion/reserva', function (req, res) {
-  let IdSensor=req.body.IdSensor; 
-  let IdBlocke=req.body.IdBlocke; 
-  let fecha=req.body.fecha;
-  mc.query('SELECT reserva.IdReserva FROM sensor INNER JOIN reserva ON sensor.IdAula = reserva.IdAula AND reserva.Fecha = ? INNER JOIN contiene ON reserva.IdReserva = contiene.IdReserva AND contiene.IdBloque = ? WHERE sensor.IdSensor = ?',[fecha, IdBlocke,IdSensor], function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'listado de todos las carreras segun la sede'
-      });
+  let IdSensor = req.body.IdSensor;
+  let IdBlocke = req.body.IdBlocke;
+  let fecha = req.body.fecha;
+  mc.query('SELECT reserva.IdReserva FROM sensor INNER JOIN reserva ON sensor.IdAula = reserva.IdAula AND reserva.Fecha = ? INNER JOIN contiene ON reserva.IdReserva = contiene.IdReserva AND contiene.IdBloque = ? WHERE sensor.IdSensor = ?', [fecha, IdBlocke, IdSensor], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todos las carreras segun la sede'
+    });
   });
 });
 
@@ -645,26 +646,26 @@ app.get('/aula/validacion/reserva', function (req, res) {
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
-  mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?',IdReserva, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Estado de uso del aula'
-      });
+  mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Estado de uso del aula'
+    });
   });
 });
 
 //ID = random - PUT = editar estado de uso del aula
 app.put('/reserva/editar/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
-  mc.query('UPDATE reserva SET reserva.EnUso = 0 WHERE reserva.IdReserva = ?',IdReserva, function (error, results, fields) {
-      if (error) throw error;
-      return res.send({
-          error: false,
-          data: results,
-          message: 'Se aeditado el estado de la reserva'
-      });
+  mc.query('UPDATE reserva SET reserva.EnUso = 0 WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se aeditado el estado de la reserva'
+    });
   });
 });
 
@@ -673,11 +674,11 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
 
 
 app.post('/enviarcorreo', function (req, res) {
-  if (mc){
+  if (mc) {
 
 
     //EL SMTPTRANSPORT ES EL QUE ENVIA EL CORREO, ESTA AQUI PA QUE NO SE ENVIE UN CORREO CADA VEZ QUE HACES UN CAMBIO EN EL BACK
-    smtpTransport.sendMail(mailOptions, (error, response)=>{
+    smtpTransport.sendMail(mailOptions, (error, response) => {
       error ? console.log(error) : console.log(response);
       smtpTransport.close();
     });
