@@ -484,12 +484,13 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
 });
 
 //ID = 21 - GET = obtener alerta de desuso de aula 
-app.get('/reporte/obtener/:IdArea', function (req, res) {
-  let IdArea = req.params.IdArea;
-  mc.query('SELECT  aula.NomAula, datos.IdDatos, datos.CapturaFotografica FROM areatrabajo  INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea AND  areatrabajo.IdArea = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1', IdArea, function (error, results, fields) {
+app.get('/reporte/obtener/:IdUsuario', function (req, res) {
+  let IdUsuario = req.params.IdUsuario;
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 WHERE areatrabajo.IdUsuario = ?', IdUsuario, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
+      dataLenghy: results.length,
       data: results,
       message: 'Obtener alerta de desuso de aula'
     });
