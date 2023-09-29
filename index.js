@@ -127,11 +127,18 @@ app.post("/usuario/session", (req, res) => {
       });
     }
     if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+
+      let SEED = 'esta-es-una-semilla';
+      let token = jwt.sign({usuario:results[0].Contrasenia}, SEED,{expiresIn: 14400});
+
       return res.status(200).json({
         ok: true,
         mensaje: "usuario logueado correctamente",
         data: Usuario,
-        errors: err
+        errors: err,
+        usuario:results,
+        id: results[0].IdUsuario,
+        token: token
       })
     } else {
       return res.status(400).json({
@@ -700,6 +707,8 @@ app.get("/", (req, res, next) => {
 app.listen(3000, () => {
   console.log("Express Server - puerto 3000 online");
 });
+
+
 
 /*
 
