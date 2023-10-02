@@ -36,23 +36,118 @@ const smtpTransport = nodemailer.createTransport({
   }
 });
 
-let msg = `Esto es una prueba 
-            <h1>HOLA MUNDO<h1>
-            <img src="https://lastfm.freetls.fastly.net/i/u/ar0/bca68e9dcf9585867a13f6130194c9cc.jpg">`;
 
-
-const mailOptions = {
-  from: "monitoreoaulas@gmail.com",
-  to: "sebastian.vera1901@alumnos.ubiobio.cl",
-  subject: "PRUEBA ENVIO DE MAILS SOY EL JOAQUIN AYUDA ME QUEDE ATRAPADO EN EL COMPUTADOR",
-  generateTextFromHTML: true,
-  html: msg
-};
-
-
-
+//ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.post("/EnviarCorreo", (req, res) => {
+  let datoscorreo = {
+    to: req.body.to,
+    NomDirector: req.body.NomDirector,
+    ApeDirector: req.body.ApeDirector,
+    NomSede: req.body.NomSede,
+    NomCurso:req.body.NomCurso, 
+    NomProfesor:req.body.NomProfesor, 
+    FechaReporte:req.body.FechaReporte, 
+    NomCarrera:req.body.NomCarrera, 
+    NomEncargado:req.body.NomEncargado,
+    NomAula:req.body.NomAula, 
+    CapturaFotografica:req.body.CapturaFotografica,  
+  };
+
+  if (!datoscorreo.to) {
+    return res.status(400).send("Ingrese un correo destinatario válido.");
+  }
+
+  let msg = `<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+
+  .justificado {
+    text-align: justify;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f9f9;
+  }
+  
+  .encabezado {
+    text-align: center;
+    background-color: #333;
+    color: #fff;
+    padding: 10px 0;
+  }
+  
+  .contenido {
+    margin: 20px;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .contenido p {
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+  
+  .imagen-centrada {
+    display: block;
+    margin: 0 auto;
+    max-width: 70%;
+    height: auto;
+    margin-top: 20px;
+  }
+  
+  .pie-pagina {
+    text-align: center;
+    font-style: italic;
+    margin-top: 20px;
+  }
+  </style>
+</head>
+<body>
+  <div class="justificado">
+    <div class="encabezado">
+      <h1>Asunto: Reporte de Desuso de Aula de Clases</h1>
+    </div>
+    <div class="contenido">
+      <p>Estimada ${datoscorreo.NomDirector} ${datoscorreo.ApeDirector} </p>
+      <p>Me dirijo a usted en mi capacidad de encargado de aula de la sede ${datoscorreo.NomSede}, con el propósito de informarle sobre una situación relacionada con el uso de las instalaciones.</p>
+      <p>El motivo de mi comunicación es notificarle que el aula de clases designada con el nombre ${datoscorreo.NomAula} ha permanecido desocupada el día de la fecha, ${datoscorreo.FechaReporte},
+       a pesar de que había sido previamente reservada para el curso ${datoscorreo.NomCurso} impartido por el profesor ${datoscorreo.NomProfesor} de la carrera ${datoscorreo.NomCarrera}.</p>
+      <p>Adjunto a este correo, encontrará una captura fotográfica que muestra el estado actual del aula en cuestión como evidencia del desuso.</p>
+      <img class="imagen-centrada" src=${datoscorreo.CapturaFotografica}>
+      <p>Agradezco su atención a esta situación y quedo a la espera de sus indicaciones al respecto.</p>
+      <p class="firma">Atentamente,</p>
+      <p class="firma">${datoscorreo.NomEncargado}</p>
+      <p class="pie-pagina">Sistema de monitoreo de aulas universidad del BIO-BIO.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const mailOptions = {
+    from: "Sistema de monitoreo de aulas UBB <monitoreoaulas@gmail.com>",
+    to: datoscorreo.to,
+    subject: "Notificacion de desuso de aula "+datoscorreo.NomAula,
+    generateTextFromHTML: true,
+    html: msg
+  };
+
+  smtpTransport.sendMail(mailOptions, (error, response) => {
+    if (error) {
+      console.log(error);
+      res.status(500).send("Error al enviar el correo.");
+    } else {
+      console.log(response);
+      res.send("Correo enviado correctamente.");
+    }
+    smtpTransport.close();
+  });
+});
 
 //CORS middleware
 app.use(function (req, res, next) {
@@ -111,7 +206,7 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    if (bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
 
       let SEED = 'esta-es-una-semilla';
       let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 14400 });
@@ -213,6 +308,19 @@ app.get('/area/listado/:IdSede', function (req, res) {
       error: false,
       data: results,
       message: 'Áreas de trabajo registradas en la sede'
+    });
+  });
+});
+
+//ID = random - GET = Obtner datos para correo
+app.get('/correo/Obtener/:IdSede', function (req, res) {
+  let IdSede = req.params.IdSede;
+  mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Listado de sedes segun la ciudad'
     });
   });
 });
@@ -497,7 +605,7 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
 //ID = 21 - GET = obtener alerta de desuso de aula 
 app.get('/reporte/obtener/:IdUsuario', function (req, res) {
   let IdUsuario = req.params.IdUsuario;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 WHERE areatrabajo.IdUsuario = ?', IdUsuario, function (error, results, fields) {
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 WHERE areatrabajo.IdUsuario = ?', IdUsuario, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -712,8 +820,6 @@ app.get("/", (req, res, next) => {
 app.listen(3000, () => {
   console.log("Express Server - puerto 3000 online");
 });
-
-
 
 /*
 
