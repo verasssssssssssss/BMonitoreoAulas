@@ -149,52 +149,6 @@ app.post("/EnviarCorreo", (req, res) => {
   });
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //CORS middleware
 app.use(function (req, res, next) {
   //Enabling CORS
@@ -267,12 +221,19 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    if (bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+      
+      let SEED = 'esta-es-una-semilla';
+      let token = jwt.sign({usuario:results[0].Contrasenia}, SEED,{expiresIn: 14400});
+
       return res.status(200).json({
         ok: true,
         mensaje: "usuario logueado correctamente",
         data: Usuario,
-        errors: err
+        errors: err,
+        usuario:results,
+        id: results[0].IdUsuario,
+        token: token
       })
     } else {
       return res.status(400).json({
@@ -855,3 +816,131 @@ app.get("/", (req, res, next) => {
 app.listen(3000, () => {
   console.log("Express Server - puerto 3000 online");
 });
+
+/*
+
+//ID = 27 - POST = enviar correo de desuso de aula
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+const OAuth2 = google.auth.OAuth2;
+const CLIENT_ID = "437769868676-dqdshuubhglogmdvbjllm359g5cdvvpg.apps.googleusercontent.com";
+const CLIENT_SECRET = "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";
+const REDIRECT_URI = "https://developers.google.com/oauthplayground";
+const REFRESH_TOKEN = "1//04vyZCjWlhwFkCgYIARAAGAQSNwF-L9IruQNr1XrmjdySTV8GO36rCb6k-l7Ryhg7aXHGMWzj7KzHtNDg4-pOmvFr_pad5lEi_88"
+
+const oauth2Client = new OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+oauth2Client.setCredentials({refresh_token: REFRESH_TOKEN});
+const accessToken = oauth2Client.getAccessToken();
+
+const smtpTransport = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    type: "OAuth2",
+    user: "betokatrina@gmail.com",
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    refreshToken: REFRESH_TOKEN,
+    accessToken: accessToken
+  }
+});
+
+
+app.post("/EnviarCorreo", (req, res) => {
+  let datoscorreo = {
+    to: req.body.to,
+    NomDirector: req.body.NomDirector,
+    ApeDirector: req.body.ApeDirector,
+    NomCurso:req.body.NomCurso, 
+    NomProfesor:req.body.NomProfesor, 
+    FechaReporte:req.body.FechaReporte, 
+    NomCarrera:req.body.NomCarrera, 
+    NomEncargado:req.body.NomEncargado,
+    NomAula:req.body.NomAula, 
+    CapturaFotografica:req.body.CapturaFotografica,  
+  };
+
+  to,NomDirector,ApeDirector,NomCurso,NomProfesor,FechaReporte,NomCarrera, NomEncargado,NomAula,CapturaFotografica 
+
+  if (!datoscorreo.to) {
+    return res.status(400).send("Ingrese un correo destinatario válido.");
+  }
+  let msg = `
+  <html>
+    <head>
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+        }
+        .container {
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+        }
+        .header {
+          background-color: #f0f0f0;
+          padding: 10px;
+          text-align: center;
+          font-size: 24px;
+          font-weight: bold;
+        }
+        .info {
+          margin-top: 20px;
+          margin-bottom: 20px;
+        }
+        .info p {
+          margin: 5px 0;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 20px;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">Confirmación de reserva de cita para tatuaje</div>
+        <div class="info">
+          <p>Estimado/a ${datosReserva.Npersona} ${datosReserva.Apersona},</p>
+          <p>Estimado/a Director de aula,</p>
+          <p>Me dirijo a usted en mi capacidad de encargado de aula con el propósito de informarle sobre una situación relacionada con el uso de las instalaciones.</p>
+          <p>El motivo de mi comunicación es notificarle que el aula de clases designada con el nombre [NomAula] ha permanecido desocupada en el día de la fecha, [FechaReporte], a pesar de que había sido previamente reservada para el curso [NomCurso] impartido por el profesor [NomProfesor] de la carrera [NomCarrera].</p>
+          <p>Adjunto a este correo, encontrará una captura fotográfica que muestra el estado actual del aula en cuestión como evidencia del desuso.</p>
+          <img src="URL_de_la_imagen" alt="Captura Fotográfica">
+          <p>Agradezco su atención a esta situación y quedo a la espera de sus indicaciones al respecto.</p>
+          <p>Atentamente,<br>[Nombre del encargado]</p>
+        </div>
+        <div class="footer">Este es un correo electrónico generado automáticamente, por favor no respondas a este mensaje.</div>
+      </div>
+    </body>
+  </html>`;
+
+  const mailOptions = {
+    from: "Sistema de monitoreo de aulas Fernando May <betokatrina@gmail.com>",
+    to: datosReserva.to,
+    subject: "Notificacion de desuso de aula "+datoscorreo.NomAula,
+    generateTextFromHTML: true,
+    html: msg
+  };
+
+  smtpTransport.sendMail(mailOptions, (error, response) => {
+    if (error) {
+      console.log(error);
+      res.status(500).send("Error al enviar el correo.");
+    } else {
+      console.log(response);
+      res.send("Correo enviado correctamente.");
+    }
+    smtpTransport.close();
+  });
+});
+
+*/
