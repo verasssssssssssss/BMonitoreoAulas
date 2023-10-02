@@ -74,22 +74,7 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-/* app.use('/', (req, res, next) => {
-  let token = req.query.token;
-  let SEED = "esta-es-una-semilla";
-  console.log(token);
-  jwt.verify(token, SEED, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({
-        ok: false,
-        mensaje: "Token incorrecto",
-        errors: err,
-      });
-    }
-    req.usuario = decoded.usuario;
-    next();
-  });
-}); */
+
 
 
 /////////////////////////////////////////////////////////////
@@ -126,17 +111,17 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if (bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
 
       let SEED = 'esta-es-una-semilla';
-      let token = jwt.sign({usuario:results[0].Contrasenia}, SEED,{expiresIn: 14400});
+      let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 14400 });
 
       return res.status(200).json({
         ok: true,
         mensaje: "usuario logueado correctamente",
         data: Usuario,
         errors: err,
-        usuario:results,
+        usuario: results,
         id: results[0].IdUsuario,
         token: token
       })
@@ -149,6 +134,25 @@ app.post("/usuario/session", (req, res) => {
     }
   }
   );
+});
+
+
+
+app.use('/', (req, res, next) => {
+  let token = req.query.token;
+  let SEED = "esta-es-una-semilla";
+  console.log(token);
+  jwt.verify(token, SEED, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({
+        ok: false,
+        mensaje: "Token incorrecto",
+        errors: err,
+      });
+    }
+    req.usuario = decoded.usuario;
+    next();
+  });
 });
 
 //ID = random - GET = Nombre de la Ciudad segun id *
