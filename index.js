@@ -232,7 +232,7 @@ app.post("/usuario/session", (req, res) => {
 });
 
 
-
+/*
 app.use('/', (req, res, next) => {
   let token = req.query.token;
   let SEED = "esta-es-una-semilla";
@@ -249,6 +249,7 @@ app.use('/', (req, res, next) => {
     next();
   });
 });
+*/
 
 //ID = random - GET = Nombre de la Ciudad segun id *
 app.get('/sede/obtener/:IdCiudad', function (req, res) {
