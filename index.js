@@ -618,7 +618,7 @@ app.get('/reporte/obtener/:IdUsuario', function (req, res) {
 });
 
 //ID = random - PUT = Afirmar o negar alerta de desuso de aula 
-app.put('/reporte/validar', function (req, res) {
+app.put('/alerta/validar', function (req, res) {
   let IdDatos = req.body.IdDatos;
   let validacion = req.body.validacion;
   mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?', [validacion, IdDatos], function (error, results, fields) {
