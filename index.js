@@ -9,6 +9,7 @@ const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
+/*
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
@@ -35,7 +36,7 @@ const smtpTransport = nodemailer.createTransport({
     accessToken: accessToken,
   }
 });
-
+*/
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
@@ -189,16 +190,7 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    let Usuario = {
-      IdUsuario: results[0].IdUsuario,
-      NomUsuario: results[0].NomUsuario,
-      ApeUsuario: results[0].ApeUsuario,
-      Mail: results[0].Mail,
-      IdRol: results[0].IdRol,
-      IdSede: results[0].IdSede,
-      IdCarrera: results[0].IdCarrera,
-      IdCiudad: results[0].IdCiudad
-    };
+
     if (!results.length) {
       return res.status(400).json({
         ok: false,
@@ -278,9 +270,9 @@ app.get('/sede/listado/:IdCiudad', function (req, res) {
 });
 
 //ID = random - GET = Datos de encargado de aula segun id *
-app.get('/encargado/obtener/:IdUsuario', function (req, res) {
+app.get('/usuario/obtener/:IdUsuario', function (req, res) {
   let IdUsuario = req.params.IdUsuario;
-  mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Mail, Contrasenia FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
+  mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Fotografia, Mail, Contrasenia  FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -299,11 +291,28 @@ app.put('/area/quitar/:IdUsuario', (req, res) => {
   });
 });
 
+//ID = random - PUT = Editar Usuario
+app.put('/usuario/editar', (req, res) => {
+  const body = {
+    IdUsuario: req.body.IdUsuario,
+    NomUsuario:req.body.NomUsuario,
+    ApeUsuario:req.body.ApeUsuario,
+    Fotografia:req.body.Fotografia,
+    Mail:req.body.Mail,
+    Contrasenia:req.body.Contrasenia,
+  };
+  mc.query("UPDATE usuario SET NomUsuario=?,ApeUsuario=?,Fotografia=?,Mail=?,Contrasenia=? WHERE IdUsuario  = ?",[body.NomUsuario,body.ApeUsuario,body.Fotografia,body.Mail,body.Contrasenia,body.IdUsuario], function (error, results, fields) {
+    if (error) throw error;
+    return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + body.IdUsuario + " ha quedado sin encargado" });
+  });
+});
+
+
 
 //ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede *
 app.get('/area/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
+  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario, us.Fotografia FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -361,6 +370,7 @@ app.post('/encargado/crear', function (req, res) {
     Contrasenia: bcrypt.hashSync(req.body.Contrasenia, 10),
     IdRol: 2,
     IdSede: req.body.IdSede,
+    Fotografia: req.body.Fotografia,
   };
   console.log(datosEncargado);
   if (mc) {
@@ -385,6 +395,7 @@ app.put('/encargado/editar/:IdUsuario', (req, res) => {
     Mail: req.body.Mail,
     Contrasenia: req.body.Contrasenia,
     IdSede: req.body.IdSede,
+    Fotografia: req.body.Fotografia,
   };
   if (!IdUsuario) {
     return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
@@ -763,7 +774,6 @@ app.get('/aula/validacion/reserva', function (req, res) {
   });
 });
 
-
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
@@ -790,25 +800,15 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
   });
 });
 
-
-
-
-
 app.post('/enviarcorreo', function (req, res) {
   if (mc) {
-
-
     //EL SMTPTRANSPORT ES EL QUE ENVIA EL CORREO, ESTA AQUI PA QUE NO SE ENVIE UN CORREO CADA VEZ QUE HACES UN CAMBIO EN EL BACK
     smtpTransport.sendMail(mailOptions, (error, response) => {
       error ? console.log(error) : console.log(response);
       smtpTransport.close();
     });
-
-
-
   }
 });
-
 
 //Rutass
 app.get("/", (req, res, next) => {
