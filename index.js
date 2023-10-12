@@ -170,9 +170,6 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-
-
-
 /////////////////////////////////////////////////////////////
 // sensores
 /////////////////////////////////////////////////////////////
@@ -357,6 +354,19 @@ app.get('/aula/listado/:IdArea', function (req, res) {
       error: false,
       data: results,
       message: 'listado de todas las aulas de un área'
+    });
+  });
+});
+
+//ID = random - GET = listado de todas las aulas de un área *
+app.get('/aula/listado/sede/:IdSede', function (req, res) {
+  let IdSede = req.params.IdSede;
+  mc.query('SELECT aula.IdAula, aula.NomAula FROM aula INNER JOIN areatrabajo ON aula.IdArea=areatrabajo.IdArea AND aula.Visible = 1 AND areatrabajo.IdSede= ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todas las aulas de una sede'
     });
   });
 });
@@ -615,9 +625,11 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
 });
 
 //ID = 21 - GET = obtener alerta de desuso de aula 
-app.get('/reporte/obtener/:IdUsuario', function (req, res) {
+app.post('/reporte/obtener/:IdUsuario', function (req, res) {
   let IdUsuario = req.params.IdUsuario;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 WHERE areatrabajo.IdUsuario = ?', IdUsuario, function (error, results, fields) {
+  let DiaClases = req.body.DiaClases;
+  let IdBloque = req.body.IdBloque;
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso FROM areatrabajo  INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea  INNER JOIN sensor ON aula.IdAula = sensor.IdAula  INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1  INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN contiene ON reserva.IdReserva = contiene.IdReserva AND contiene.IdBloque = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso  INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE areatrabajo.IdUsuario = ?',[DiaClases, IdBloque,IdUsuario], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -698,7 +710,7 @@ app.get('/reporte/listado/carrera', function (req, res) {
 //ID = 23 - GET = listado de todos los reportes segun la sede 
 app.get('/reporte/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario INNER JOIN datos ON datos.IdDatos = rep.IdDatos', IdSede, function (error, results, fields) {
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
