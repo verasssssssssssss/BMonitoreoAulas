@@ -195,19 +195,16 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if (Contrasenia == results[0].Contrasenia) {
 
-      let SEED = 'esta-es-una-semilla';
-      let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 14400 });
+      //let SEED = 'esta-es-una-semilla';
+      //let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 14400 });
 
       return res.status(200).json({
         ok: true,
         mensaje: "usuario logueado correctamente",
-        data: Usuario,
-        errors: err,
-        usuario: results,
-        id: results[0].IdUsuario,
-        token: token
+        data: results,
       })
     } else {
       return res.status(400).json({
@@ -703,6 +700,20 @@ app.get('/reporte/listado/carrera', function (req, res) {
       error: false,
       data: results,
       message: 'listado de reportes de una sede segun la carrera universitaria'
+    });
+  });
+});
+
+
+//ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
+app.get('/datos/tempHumedad', function (req, res) {
+  //SELECT Temperatura, Humedad FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10;', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos sobre Temperatura y Humedad sin sala'
     });
   });
 });

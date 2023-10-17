@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 09-10-2023 a las 05:54:06
+-- Tiempo de generación: 17-10-2023 a las 07:30:54
 -- Versión del servidor: 10.4.28-MariaDB
--- Versión de PHP: 8.2.4
+-- Versión de PHP: 8.0.28
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -42,7 +42,7 @@ CREATE TABLE `areatrabajo` (
 INSERT INTO `areatrabajo` (`IdArea`, `NomArea`, `Visible`, `IdUsuario`, `IdSede`) VALUES
 (1, 'Edificio A', 0, 1, 1),
 (2, 'Edificio Bebesita', 0, 2, 1),
-(3, 'Edificio Cn', 1, 6, 1),
+(3, 'Edificio C', 1, 6, 1),
 (4, 'Edificio humanidades', 1, NULL, 2),
 (5, 'Sociales', 1, 4, 2),
 (6, 'Salas f', 1, NULL, 2),
@@ -102,7 +102,7 @@ INSERT INTO `aula` (`IdAula`, `NomAula`, `CantidadAlumnos`, `Visible`, `IdArea`)
 (20, 'A23', 22, 0, 1),
 (21, 'A31', 11, 0, 1),
 (22, 'A12', 33, 1, 1),
-(23, 'juaini', 55, 1, 2),
+(23, 'A55', 55, 1, 2),
 (24, 'f25', 55, 0, 12),
 (25, 'C3', 45, 1, 3),
 (26, 'G1', 51, 1, 13),
@@ -127,7 +127,21 @@ CREATE TABLE `bloquehorario` (
 
 INSERT INTO `bloquehorario` (`IdBloque`, `HoraInicio`, `HoraFin`, `VentanaHoraria`) VALUES
 (1, '08:10', '08:50', 0),
-(2, '08:50', '09:30', 1);
+(2, '08:50', '09:30', 1),
+(3, '09:40', '10:20', 0),
+(4, '10:20', '11:00', 1),
+(5, '11:10', '11:50', 0),
+(6, '11:50', '12:30', 1),
+(7, '12:40', '13:20', 0),
+(8, '13:20', '14:00', 1),
+(9, '14:10', '14:50', 0),
+(10, '14:50', '15:30', 1),
+(11, '15:40', '16:20', 0),
+(12, '16:20', '17:00', 1),
+(13, '17:10', '17:50', 0),
+(14, '17:50', '18:30', 1),
+(15, '18:40', '19:20', 0),
+(16, '19:20', '20:00', 0);
 
 -- --------------------------------------------------------
 
@@ -189,6 +203,27 @@ INSERT INTO `contiene` (`IdReserva`, `IdBloque`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Estructura de tabla para la tabla `curso`
+--
+
+CREATE TABLE `curso` (
+  `IdCurso` int(100) NOT NULL,
+  `NomCurso` varchar(70) NOT NULL,
+  `NomProfesor` varchar(100) NOT NULL,
+  `IdCarrera` int(4) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `curso`
+--
+
+INSERT INTO `curso` (`IdCurso`, `NomCurso`, `NomProfesor`, `IdCarrera`) VALUES
+(1, 'ARQUITECTURA DE SOFTWARE', 'Gastón Patricio Márquez Ortega', 1),
+(2, 'INVESTIGACIÓN DE OPERACIONES', 'Virna Angélica Ortiz Araya', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Estructura de tabla para la tabla `datos`
 --
 
@@ -197,10 +232,10 @@ CREATE TABLE `datos` (
   `Fecha` datetime NOT NULL,
   `Reportado` tinyint(1) NOT NULL,
   `Correcto` tinyint(1) NOT NULL,
-  `IntensidadLuminica` int(11) DEFAULT NULL,
-  `NivelesDeCO2` int(11) DEFAULT NULL,
-  `Temperatura` int(11) DEFAULT NULL,
-  `Humedad` int(11) DEFAULT NULL,
+  `IntensidadLuminica` float DEFAULT NULL,
+  `NivelesDeCO2` float DEFAULT NULL,
+  `Temperatura` float DEFAULT NULL,
+  `Humedad` float DEFAULT NULL,
   `CapturaFotografica` varchar(500) DEFAULT NULL,
   `IdSensor` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -212,7 +247,31 @@ CREATE TABLE `datos` (
 INSERT INTO `datos` (`IdDatos`, `Fecha`, `Reportado`, `Correcto`, `IntensidadLuminica`, `NivelesDeCO2`, `Temperatura`, `Humedad`, `CapturaFotografica`, `IdSensor`) VALUES
 (1, '2023-08-27 06:47:21', 1, 0, 12, 21, 321, 12, 'https://upload.wikimedia.org/wikipedia/commons/b/b0/Sala_de_estudio_UBB_La_Castilla.jpg', 1),
 (2, '2023-08-28 01:08:58', 1, 0, 12, 123, 21, 212, 'https://www.canal21tv.cl/wp/wp-content/uploads/2019/05/sala-clases.jpg', 1),
-(3, '2023-09-12 18:32:51', 1, 1, 12, NULL, NULL, NULL, 'https://s10.s3c.es/imag/_v0/770x420/b/2/5/clase-vacia-4-coronavirus.jpg', 1);
+(3, '2023-09-12 18:32:51', 1, 0, 12, NULL, NULL, NULL, 'https://s10.s3c.es/imag/_v0/770x420/b/2/5/clase-vacia-4-coronavirus.jpg', 1),
+(14, '2023-10-16 22:59:11', 0, 0, 800, 400, 25.5, 50, '', 1),
+(15, '2023-10-16 22:59:15', 0, 0, 800, 400, 25.5, 50, '', 1),
+(16, '2023-10-16 22:59:19', 0, 0, 800, 400, 25.5, 50, '', 1),
+(17, '2023-10-16 22:59:24', 0, 0, 800, 400, 25.5, 50, '', 1),
+(18, '2023-10-16 22:59:28', 0, 0, 800, 400, 25.5, 50, '', 1),
+(19, '2023-10-16 22:59:32', 0, 0, 800, 400, 25.5, 50, '', 1),
+(20, '2023-10-16 22:59:36', 0, 0, 800, 400, 25.5, 50, '', 1),
+(21, '2023-10-16 22:59:41', 0, 0, 800, 400, 25.5, 50, '', 1),
+(22, '2023-10-16 22:59:45', 0, 0, 800, 400, 25.5, 50, '', 1),
+(23, '2023-10-16 22:59:49', 0, 0, 800, 400, 25.5, 50, '', 1),
+(24, '2023-10-16 22:59:53', 0, 0, 800, 400, 25.5, 50, '', 1),
+(25, '2023-10-16 22:59:57', 0, 0, 800, 400, 25.5, 50, '', 1),
+(26, '2023-10-16 23:03:11', 0, 0, 800, 400, 25, 50, '', 1),
+(27, '2023-10-16 23:03:15', 0, 0, 800, 400, 25, 50, '', 1),
+(28, '2023-10-16 23:03:20', 0, 0, 700, 440, 35, 60, '', 1),
+(29, '2023-10-16 23:03:24', 0, 0, 770, 460, 25, 50, '', 1),
+(30, '2023-10-16 23:03:28', 0, 0, 900, 300, 55, 40, '', 1),
+(31, '2023-10-16 23:03:32', 0, 0, 200, 200, 15, 15, '', 1),
+(32, '2023-10-16 23:03:36', 0, 0, 800, 400, 20, 23, '', 1),
+(33, '2023-10-16 23:03:40', 0, 0, 655, 500, 45, 60, '', 1),
+(34, '2023-10-16 23:03:44', 0, 0, 800, 400, 55, 20, '', 1),
+(35, '2023-10-16 23:03:49', 0, 0, 520, 466, 25, 44, '', 1),
+(36, '2023-10-16 23:03:53', 0, 0, 700, 370, 15, 33, '', 1),
+(37, '2023-10-16 23:03:58', 0, 0, NULL, NULL, 45, 10, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -243,10 +302,9 @@ INSERT INTO `posee` (`IdSede`, `IdCarrera`) VALUES
 
 CREATE TABLE `reporte` (
   `IdReporte` int(9) NOT NULL,
-  `NomCurso` varchar(30) NOT NULL,
-  `NomProfesor` varchar(40) NOT NULL,
   `FechaReporte` datetime(6) NOT NULL,
   `IdCarrera` int(3) NOT NULL,
+  `IdCurso` int(4) NOT NULL,
   `IdUsuario` int(3) NOT NULL,
   `IdAula` int(3) NOT NULL,
   `IdDatos` int(5) NOT NULL
@@ -256,29 +314,29 @@ CREATE TABLE `reporte` (
 -- Volcado de datos para la tabla `reporte`
 --
 
-INSERT INTO `reporte` (`IdReporte`, `NomCurso`, `NomProfesor`, `FechaReporte`, `IdCarrera`, `IdUsuario`, `IdAula`, `IdDatos`) VALUES
-(5, 'Bases de Datos', 'Profesor B', '2023-08-10 14:30:00.000000', 1, 2, 2, 2),
-(7, 'Diseño de Interfaces', 'Profesor D', '2023-08-12 16:00:00.987654', 1, 2, 2, 2),
-(9, 'Sistemas Operativos', 'Profesor F', '2023-08-14 11:30:59.876543', 1, 2, 2, 2),
-(11, 'Programación Web', 'Profesor H', '2023-08-16 15:00:01.111111', 1, 2, 2, 2),
-(13, 'Análisis de Datos', 'Profesor J', '2023-08-18 18:30:22.222222', 1, 2, 2, 2),
-(15, 'Introducción a la Redes', 'Profesor L', '2023-08-20 08:00:44.444444', 1, 2, 2, 2),
-(17, 'Desarrollo de Software', 'Profesor N', '2023-08-22 14:30:00.000000', 1, 2, 2, 2),
-(19, 'Introducción a la Programación', 'Profesor A', '2023-08-24 10:00:00.000000', 1, 2, 2, 2),
-(21, 'Programación Avanzada', 'Profesor C', '2023-08-26 12:30:00.000000', 1, 2, 2, 2),
-(23, 'Redes de Computadoras', 'Profesor E', '2023-08-28 16:00:00.000000', 1, 2, 2, 2),
-(25, 'Introducción a la Inteligencia', 'Profesor G', '2023-08-30 09:30:00.000000', 1, 2, 2, 2),
-(27, 'Seguridad Informática', 'Profesor I', '2023-09-01 12:00:00.000000', 1, 2, 2, 2),
-(28, 'Análisis de Datos', 'Profesor J', '2023-09-02 13:15:00.000000', 1, 2, 1, 1),
-(29, 'Diseño de Algoritmos', 'Profesor K', '2023-09-03 14:30:00.000000', 1, 2, 2, 2),
-(30, 'Introducción a la Redes', 'Profesor L', '2023-09-04 15:45:00.000000', 1, 2, 1, 1),
-(31, 'Arquitectura de Computadoras', 'Profesor M', '2023-09-05 17:00:00.000000', 1, 2, 2, 2),
-(32, 'Desarrollo de Software', 'Profesor N', '2023-09-06 08:15:00.000000', 1, 2, 1, 1),
-(33, 'Sistemas Embebidos', 'Profesor O', '2023-09-07 09:30:00.000000', 1, 2, 2, 2),
-(56, 'React', 'Franco Escamilla', '2023-08-03 16:31:15.208218', 3, 2, 9, 1),
-(57, 'curso', 'profesors', '2023-10-03 18:27:04.851000', 1, 1, 1, 3),
-(58, 'curso', 'ddddddddddddddd', '2023-10-03 18:31:46.566000', 1, 1, 1, 3),
-(59, 'curso', 'profesor', '2023-10-03 18:49:28.196000', 1, 1, 1, 3);
+INSERT INTO `reporte` (`IdReporte`, `FechaReporte`, `IdCarrera`, `IdCurso`, `IdUsuario`, `IdAula`, `IdDatos`) VALUES
+(5, '2023-08-10 14:30:00.000000', 1, 1, 2, 2, 2),
+(7, '2023-08-12 16:00:00.987654', 1, 1, 2, 2, 2),
+(9, '2023-08-14 11:30:59.876543', 1, 1, 2, 2, 2),
+(11, '2023-08-16 15:00:01.111111', 1, 1, 2, 2, 2),
+(13, '2023-08-18 18:30:22.222222', 1, 1, 2, 2, 2),
+(15, '2023-08-20 08:00:44.444444', 1, 1, 2, 2, 2),
+(17, '2023-08-22 14:30:00.000000', 1, 1, 2, 2, 2),
+(19, '2023-08-24 10:00:00.000000', 1, 1, 2, 2, 2),
+(21, '2023-08-26 12:30:00.000000', 1, 1, 2, 2, 2),
+(23, '2023-08-28 16:00:00.000000', 1, 1, 2, 2, 2),
+(25, '2023-08-30 09:30:00.000000', 1, 2, 2, 2, 2),
+(27, '2023-09-01 12:00:00.000000', 1, 2, 2, 2, 2),
+(28, '2023-09-02 13:15:00.000000', 1, 2, 2, 1, 1),
+(29, '2023-09-03 14:30:00.000000', 1, 2, 2, 2, 2),
+(30, '2023-09-04 15:45:00.000000', 1, 2, 2, 1, 1),
+(31, '2023-09-05 17:00:00.000000', 1, 2, 2, 2, 2),
+(32, '2023-09-06 08:15:00.000000', 1, 2, 2, 1, 1),
+(33, '2023-09-07 09:30:00.000000', 1, 2, 2, 2, 2),
+(56, '2023-08-03 16:31:15.208218', 3, 2, 2, 9, 1),
+(57, '2023-10-03 18:27:04.851000', 1, 2, 1, 1, 3),
+(58, '2023-10-03 18:31:46.566000', 1, 2, 1, 1, 3),
+(59, '2023-10-03 18:49:28.196000', 1, 2, 1, 1, 3);
 
 -- --------------------------------------------------------
 
@@ -288,10 +346,9 @@ INSERT INTO `reporte` (`IdReporte`, `NomCurso`, `NomProfesor`, `FechaReporte`, `
 
 CREATE TABLE `reserva` (
   `IdReserva` int(5) NOT NULL,
-  `Fecha` date NOT NULL,
-  `NomUsuario` varchar(30) DEFAULT NULL,
-  `Motivo` varchar(100) DEFAULT NULL,
+  `DiaClases` int(1) NOT NULL,
   `EnUso` tinyint(1) NOT NULL,
+  `IdCurso` int(5) NOT NULL,
   `IdAula` int(3) NOT NULL,
   `IdSede` int(3) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -300,8 +357,8 @@ CREATE TABLE `reserva` (
 -- Volcado de datos para la tabla `reserva`
 --
 
-INSERT INTO `reserva` (`IdReserva`, `Fecha`, `NomUsuario`, `Motivo`, `EnUso`, `IdAula`, `IdSede`) VALUES
-(1, '2023-07-06', NULL, NULL, 0, 1, 1);
+INSERT INTO `reserva` (`IdReserva`, `DiaClases`, `EnUso`, `IdCurso`, `IdAula`, `IdSede`) VALUES
+(1, 1, 1, 1, 1, 1);
 
 -- --------------------------------------------------------
 
@@ -389,7 +446,7 @@ CREATE TABLE `usuario` (
 --
 
 INSERT INTO `usuario` (`IdUsuario`, `NomUsuario`, `ApeUsuario`, `Fotografia`, `Mail`, `Contrasenia`, `IdRol`, `IdSede`, `IdCarrera`, `IdCiudad`) VALUES
-(1, 'Oyarce', 'Sandra', 'https://firebasestorage.googleapis.com/v0/b/psensores-7c59e.appspot.com/o/Referencias%2FDELANTALs.png?alt=media&token=3a63f29d-6448-4ce8-8a5a-82c80b5cbe72', 'sebastian.a.vera.m@gmail.com', '21321322', 1, NULL, NULL, 1),
+(1, 'Oyarce', 'Sandra', 'https://firebasestorage.googleapis.com/v0/b/psensores-7c59e.appspot.com/o/Referencias%2Fd2.png?alt=media&token=d4caf01d-be4a-4c81-835d-4e3077489acf', 'sebastian.a.vera.m@gmail.com', '21321322', 1, NULL, NULL, 1),
 (2, 'Cristian', 'Valenzuela', 'https://firebasestorage.googleapis.com/v0/b/psensores-7c59e.appspot.com/o/Encargados%2Fd2.png?alt=media&token=6fcbfd20-0de5-4537-836e-083fd1e1e63b&_gl=1*1f1lk2n*_ga*MTI5ODk0Mzc4OS4xNjgzOTIzMTM0*_ga_CW55HF8NVT*MTY5NjgxOTA2MC4xMi4xLjE2OTY4MTkxNzYuNy4wLjA.', '21@21', '2121', 2, 1, NULL, NULL),
 (4, 'Jorge', 'Hormazábal ', NULL, 'jorge.hormazabal1901@alumnos.ubiobio.cl', 'Jorge', 2, 2, NULL, NULL),
 (6, 'Matias', 'Vera', 'https://firebasestorage.googleapis.com/v0/b/psensores-7c59e.appspot.com/o/Encargados%2Fd3.png?alt=media&token=03488467-ea97-4049-8d5d-e4880cd951a5&_gl=1*1x6owph*_ga*MTI5ODk0Mzc4OS4xNjgzOTIzMTM0*_ga_CW55HF8NVT*MTY5NjgxOTA2MC4xMi4xLjE2OTY4MTkyMDcuNjAuMC4w', 'Matias@gmail.com', '12345678', 2, 1, NULL, NULL),
@@ -438,6 +495,12 @@ ALTER TABLE `ciudad`
 ALTER TABLE `contiene`
   ADD KEY `IdReserva` (`IdReserva`),
   ADD KEY `IdBloque` (`IdBloque`);
+
+--
+-- Indices de la tabla `curso`
+--
+ALTER TABLE `curso`
+  ADD PRIMARY KEY (`IdCurso`);
 
 --
 -- Indices de la tabla `datos`
@@ -521,7 +584,7 @@ ALTER TABLE `aula`
 -- AUTO_INCREMENT de la tabla `bloquehorario`
 --
 ALTER TABLE `bloquehorario`
-  MODIFY `IdBloque` int(2) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `IdBloque` int(2) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT de la tabla `carrera`
@@ -536,10 +599,16 @@ ALTER TABLE `ciudad`
   MODIFY `IdCiudad` int(2) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT de la tabla `curso`
+--
+ALTER TABLE `curso`
+  MODIFY `IdCurso` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT de la tabla `datos`
 --
 ALTER TABLE `datos`
-  MODIFY `IdDatos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `IdDatos` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=38;
 
 --
 -- AUTO_INCREMENT de la tabla `reporte`
