@@ -822,6 +822,27 @@ app.post('/enviarcorreo', function (req, res) {
   }
 });
 
+
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Nuevo valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Nuevo valor de niveles de CO2
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = 'INSERT INTO datos (Fecha, Reportado, Correcto, IntensidadLuminica, NivelesDeCO2, Temperatura, Humedad, CapturaFotografica, idSensor) VALUES (NOW(), 0, 0, ?, ?, ?, ?, "", 1)';
+  mc.query(insertQuery, [luminosity, co2Level, temperature, humidity], (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
+
+
 //Rutass
 app.get("/", (req, res, next) => {
   res.status(200).json({
