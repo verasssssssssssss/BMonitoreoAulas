@@ -9,6 +9,11 @@ const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
+
+/*
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+*/
 /*
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
