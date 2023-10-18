@@ -17,12 +17,12 @@ var bcrypt = require("bcrypt");
     "test": "echo \"Error: no test specified\" && exit 1"
   },
 */
-/*
+
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
 const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04sQc0x2YT7qrCgYIARAAGAQSNwF-L9IrH2eVJR9E8SEJ7jEBWxvfakuYJQzKLdmbFSxkuLpDfYv5_srxpnVm5FxX0G7xOj_6Yi8";
+const REFRESH_TOKEN = "1//0438gTbqyDw9WCgYIARAAGAQSNwF-L9IrtkFuPCigNpysPMIPFm_iK7bApnQ7HvdS0Ns16pVxWajDSQY1lMhvzfJxsRPF46Jh0_U";
 
 const oauth2Client = new OAuth2(
   CLIENT_ID,
@@ -44,7 +44,7 @@ const smtpTransport = nodemailer.createTransport({
     accessToken: accessToken,
   }
 });
-*/
+
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
