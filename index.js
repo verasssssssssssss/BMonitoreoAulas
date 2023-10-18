@@ -246,9 +246,11 @@ app.use('/', (req, res, next) => {
 */
 //ID = 22 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear', function (req, res) {
+  const fechaActual = new Date();
+  console.log(fechaActual);
   let datosReporte = {
     IdCurso: req.body.IdCurso,
-    FechaReporte: "2023-10-18 10:29:34.360",
+    FechaReporte: fechaActual,
     IdCarrera: req.body.IdCarrera,
     IdUsuario: req.body.IdUsuario,
     IdAula: req.body.IdAula,
