@@ -11,8 +11,11 @@ var bcrypt = require("bcrypt");
 
 
 /*
+  "scripts": {
+    "start": "node index.js",
     "dev": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
 */
 /*
 const OAuth2 = google.auth.OAuth2;
@@ -583,6 +586,7 @@ app.post('/sensor/crear', function (req, res) {
   }
 });
 
+
 //ID = 18 - PUT = editar sensor 
 app.put('/sensor/editar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
@@ -625,6 +629,46 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
     });
   });
 });
+
+//ID = random - GET = obtener todas las reservas de una aula                            -----*
+app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
+  let IdAula = req.params.IdAula;
+  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas las reservas del aula con id ' + IdAula
+    });
+  });
+});
+
+//ID = random - GET = obtener todas los cursos de una carrera                          -----*
+app.get('/cursos/obtener/:Idcarrea', function (req, res) {
+  let Idcarrea = req.params.Idcarrea;
+  mc.query('SELECT curso.IdCurso, curso.NomCurso FROM curso WHERE curso.IdCarrera = ?', Idcarrea, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas los cursos de la carrera con id ' + Idcarrea
+    });
+  });
+});
+
+//ID = random - GET = obtener todos los bloques de una reserva                         -----*
+app.get('/bloque/obtener/:Idreserva', function (req, res) {
+  let Idreserva = req.params.Idreserva;
+  mc.query('SELECT IdBloque FROM contiene WHERE IdReserva = ?', Idreserva, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas los bloques pedagogico de una reserva con id ' + Idreserva
+    });
+  });
+});
+
 
 //ID = 21 - GET = obtener alerta de desuso de aula 
 app.post('/reporte/obtener/:IdUsuario', function (req, res) {
@@ -694,6 +738,53 @@ app.post('/reporte/crear', function (req, res) {
   }
 });
 
+
+//ID = random - POST = crear una reseva                                               ----*
+app.post('/reserva/crear', function (req, res) {
+  let datosreserva = {
+    DiaClases: req.body.DiaClases,
+    EnUso: 1,
+    FechaLimite: req.body.FechaLimite,
+    IdCurso: req.body.IdCurso,
+    IdAula: req.body.IdAula,
+    IdSede: req.body.IdSede,
+  };
+  console.log(datosreserva);
+  if (mc) {
+    mc.query("INSERT INTO reserva SET ?", datosreserva, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
+  }
+});
+
+//ID = random - POST = crear una reseva con bloque                                     ----*
+app.post('/reserva/crear/bloque', function (req, res) {
+  let datosreserva = {
+    IdReserva: req.body.IdReserva,
+    IdBloque: req.body.IdBloque,
+  };
+  console.log(datosreserva);
+  if (mc) {
+    mc.query("INSERT INTO contiene SET ?", datosreserva, function (error, results) {
+      if (error) {
+        console.log(nofincona);
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
+  }
+});
+
+
+
 //ID = 25 - GET = listado de todos los reportes segun la sede y la carrera 
 app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
@@ -736,7 +827,7 @@ app.get('/reporte/listado/:IdSede', function (req, res) {
   });
 });
 
-//ID = 24 - GET = listado de todos las carreras segun la sede *
+//ID = 24 - GET = listado de todos las carreras segun la sede *                  ----*
 app.get('/carreras/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
   mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
@@ -748,6 +839,8 @@ app.get('/carreras/listado/:IdSede', function (req, res) {
     });
   });
 });
+
+
 
 //ID = random - DELETE = eliminar reporte
 app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
@@ -870,131 +963,3 @@ app.get("/", (req, res, next) => {
 app.listen(3000, () => {
   console.log("Express Server - puerto 3000 online");
 });
-
-/*
-
-//ID = 27 - POST = enviar correo de desuso de aula
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-const OAuth2 = google.auth.OAuth2;
-const CLIENT_ID = "437769868676-dqdshuubhglogmdvbjllm359g5cdvvpg.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
-const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04vyZCjWlhwFkCgYIARAAGAQSNwF-L9IruQNr1XrmjdySTV8GO36rCb6k-l7Ryhg7aXHGMWzj7KzHtNDg4-pOmvFr_pad5lEi_88"
-
-const oauth2Client = new OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
-);
-
-oauth2Client.setCredentials({refresh_token: REFRESH_TOKEN});
-const accessToken = oauth2Client.getAccessToken();
-
-const smtpTransport = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: "betokatrina@gmail.com",
-    clientId: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    refreshToken: REFRESH_TOKEN,
-    accessToken: accessToken
-  }
-});
-
-
-app.post("/EnviarCorreo", (req, res) => {
-  let datoscorreo = {
-    to: req.body.to,
-    NomDirector: req.body.NomDirector,
-    ApeDirector: req.body.ApeDirector,
-    NomCurso:req.body.NomCurso, 
-    NomProfesor:req.body.NomProfesor, 
-    FechaReporte:req.body.FechaReporte, 
-    NomCarrera:req.body.NomCarrera, 
-    NomEncargado:req.body.NomEncargado,
-    NomAula:req.body.NomAula, 
-    CapturaFotografica:req.body.CapturaFotografica,  
-  };
-
-  to,NomDirector,ApeDirector,NomCurso,NomProfesor,FechaReporte,NomCarrera, NomEncargado,NomAula,CapturaFotografica 
-
-  if (!datoscorreo.to) {
-    return res.status(400).send("Ingrese un correo destinatario válido.");
-  }
-  let msg = `
-  <html>
-    <head>
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-        }
-        .container {
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-        }
-        .header {
-          background-color: #f0f0f0;
-          padding: 10px;
-          text-align: center;
-          font-size: 24px;
-          font-weight: bold;
-        }
-        .info {
-          margin-top: 20px;
-          margin-bottom: 20px;
-        }
-        .info p {
-          margin: 5px 0;
-        }
-        .footer {
-          text-align: center;
-          margin-top: 20px;
-          font-size: 12px;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">Confirmación de reserva de cita para tatuaje</div>
-        <div class="info">
-          <p>Estimado/a ${datosReserva.Npersona} ${datosReserva.Apersona},</p>
-          <p>Estimado/a Director de aula,</p>
-          <p>Me dirijo a usted en mi capacidad de encargado de aula con el propósito de informarle sobre una situación relacionada con el uso de las instalaciones.</p>
-          <p>El motivo de mi comunicación es notificarle que el aula de clases designada con el nombre [NomAula] ha permanecido desocupada en el día de la fecha, [FechaReporte], a pesar de que había sido previamente reservada para el curso [NomCurso] impartido por el profesor [NomProfesor] de la carrera [NomCarrera].</p>
-          <p>Adjunto a este correo, encontrará una captura fotográfica que muestra el estado actual del aula en cuestión como evidencia del desuso.</p>
-          <img src="URL_de_la_imagen" alt="Captura Fotográfica">
-          <p>Agradezco su atención a esta situación y quedo a la espera de sus indicaciones al respecto.</p>
-          <p>Atentamente,<br>[Nombre del encargado]</p>
-        </div>
-        <div class="footer">Este es un correo electrónico generado automáticamente, por favor no respondas a este mensaje.</div>
-      </div>
-    </body>
-  </html>`;
-
-  const mailOptions = {
-    from: "Sistema de monitoreo de aulas Fernando May <betokatrina@gmail.com>",
-    to: datosReserva.to,
-    subject: "Notificacion de desuso de aula "+datoscorreo.NomAula,
-    generateTextFromHTML: true,
-    html: msg
-  };
-
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    if (error) {
-      console.log(error);
-      res.status(500).send("Error al enviar el correo.");
-    } else {
-      console.log(response);
-      res.send("Correo enviado correctamente.");
-    }
-    smtpTransport.close();
-  });
-});
-
-*/
