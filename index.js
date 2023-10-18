@@ -248,7 +248,7 @@ app.use('/', (req, res, next) => {
 app.post('/reporte/crear', function (req, res) {
   let datosReporte = {
     IdCurso: req.body.IdCurso,
-    FechaReporte: req.body.FechaReporte,
+    FechaReporte: "2023-10-18 10:29:34.360",
     IdCarrera: req.body.IdCarrera,
     IdUsuario: req.body.IdUsuario,
     IdAula: req.body.IdAula,
