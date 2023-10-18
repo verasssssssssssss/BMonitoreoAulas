@@ -630,7 +630,7 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
   });
 });
 
-//ID = random - GET = obtener todas las reservas de una aula                            -----*
+//ID = random - GET = obtener todas las reservas de una aula                            -----*----
 app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
   let IdAula = req.params.IdAula;
   mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
