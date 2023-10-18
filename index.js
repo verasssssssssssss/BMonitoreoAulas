@@ -171,10 +171,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bpvnv3abbbiztgxxm1bw-mysql.services.clever-cloud.com",
+  user: "up2gqt9awmsko9zg",
+  password: "n4URaAMnJh7tVzcUkDP0",
+  database: "bpvnv3abbbiztgxxm1bw",
 });
 mc.connect();
 
@@ -244,6 +244,28 @@ app.use('/', (req, res, next) => {
   });
 });
 */
+//ID = 22 - POST = crear un reprote de desuso de aula 
+app.post('/reporte/crear', function (req, res) {
+  let datosReporte = {
+    IdCurso: req.body.IdCurso,
+    FechaReporte: req.body.FechaReporte,
+    IdCarrera: req.body.IdCarrera,
+    IdUsuario: req.body.IdUsuario,
+    IdAula: req.body.IdAula,
+    IdDatos: req.body.IdDatos,
+  };
+  console.log(datosReporte);
+  if (mc) {
+    mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
+  }
+});
 
 //ID = random - GET = Nombre de la Ciudad segun id *
 app.get('/sede/obtener/:IdCiudad', function (req, res) {
@@ -713,30 +735,7 @@ app.get('/obtener/datos/coordinadora/:IdSede', function (req, res) {
   });
 });
 
-//ID = 22 - POST = crear un reprote de desuso de aula 
-app.post('/reporte/crear', function (req, res) {
-  let datosReporte = {
-    NomCurso: req.body.NomCurso,
-    NomProfesor: req.body.NomProfesor,
-    FechaReporte: req.body.FechaReporte,
-    IdCarrera: req.body.IdCarrera,
-    IdUsuario: req.body.IdUsuario,
-    IdAula: req.body.IdAula,
-    IdDatos: req.body.IdDatos,
-  };
-  console.log(datosReporte);
-  if (mc) {
-    mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
-      if (error) {
-        console.log(nofincona);
-        res.status(500).json({ "Mensaje": "Error" });
-      }
-      else {
-        res.status(201).json({ "Mensaje": "Insertado" });
-      }
-    });
-  }
-});
+
 
 
 //ID = random - POST = crear una reseva                                               ----*
