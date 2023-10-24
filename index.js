@@ -161,7 +161,7 @@ app.post("/EnviarCorreo", (req, res) => {
 //CORS middleware
 app.use(function (req, res, next) {
   //Enabling CORS //["http://localhost:4200","https://cerulean-tarsier-37d919.netlify.app"]
-  res.header("Access-Control-Allow-Origin", ["https://whimsical-entremet-d3cf61.netlify.app"]);
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
@@ -171,14 +171,29 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bpvnv3abbbiztgxxm1bw-mysql.services.clever-cloud.com",
-  user: "up2gqt9awmsko9zg",
-  password: "n4URaAMnJh7tVzcUkDP0",
-  database: "bpvnv3abbbiztgxxm1bw",
+  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
+  user: "uufsbfrbzl4lpcw5",
+  password: "mrgRcrDBfcUtGeh1zvI5",
+  database: "bdhbifq8excixbrx1u0t",
 });
 mc.connect();
 
 /////////////////////////////////////////////////////////////
+
+
+/*
+
+const mc = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
+});
+mc.connect();
+
+*/
+
+
 // sensores
 /////////////////////////////////////////////////////////////
 
@@ -285,12 +300,25 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
-  mc.query('SELECT sede.IdSede,sede.NomSede FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+  mc.query('SELECT sede.IdSede,sede.NomSede, sede.Acronimo FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
       message: 'Listado de sedes segun la ciudad'
+    });
+  });
+});
+
+//ID = random - GET = cambiar sede de encargado
+app.put('/usuario/cambiar/sede', function (req, res) {
+  let IdUsuario = req.body.IdUsuario;
+  let IdSede = req.body.IdSede;
+  mc.query('UPDATE usuario SET  IdSede = ? WHERE IdUsuario = ?', [IdSede,IdUsuario], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      message: 'Sede del encargado actualizadas'
     });
   });
 });
@@ -305,15 +333,6 @@ app.get('/usuario/obtener/:IdUsuario', function (req, res) {
       data: results,
       message: 'Datos de encargado de aula segun id ' + IdUsuario
     });
-  });
-});
-
-//ID = random - PUT = eliminar encargado de una area segun id encargado *
-app.put('/area/quitar/:IdUsuario', (req, res) => {
-  let IdUsuario = req.params.IdUsuario;
-  mc.query("UPDATE areatrabajo SET IdUsuario=NULL WHERE IdUsuario  = ?", IdUsuario, function (error, results, fields) {
-    if (error) throw error;
-    return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + IdUsuario + " ha quedado sin encargado" });
   });
 });
 
@@ -335,10 +354,10 @@ app.put('/usuario/editar', (req, res) => {
 
 
 
-//ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede *
+//ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede * ------------------cambio-----listo
 app.get('/area/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT 	ar.IdArea,ar.NomArea,ar.IdUsuario,us.NomUsuario,us.ApeUsuario, us.Fotografia FROM areatrabajo AS ar LEFT JOIN usuario AS us ON ar.IdUsuario = us.IdUsuario AND us.IdRol = 2  WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
+  mc.query('SELECT ar.IdArea,ar.NomArea FROM areatrabajo AS ar WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -362,9 +381,8 @@ app.get('/correo/Obtener/:IdSede', function (req, res) {
 });
 
 //ID = 3 - GET = listado de todos los encargados de aulas segun la sede *
-app.get('/encargado/listado/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
-  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2 AND IdSede = ?', IdSede, function (error, results, fields) {
+app.get('/encargado/listado', function (req, res) {
+  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2', function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -476,7 +494,7 @@ app.post('/area/crear', function (req, res) {
   }
 });
 
-//ID = 10 - PUT = editar area de trabajo *
+//ID = 10 - PUT = editar area de trabajo  ---------------------cambio
 app.put('/area/editar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
@@ -496,36 +514,6 @@ app.put('/area/eliminar/:IdArea', (req, res) => {
   let IdArea = req.params.IdArea;
   let DatosArea = {
     Visible: 0,
-  };
-  if (!IdArea) {
-    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
-  }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
-    if (error) throw error;
-    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
-  });
-});
-
-//ID = 12 - PUT = asignar área de trabajo *
-app.put('/area/asignar/:IdArea', (req, res) => {
-  let IdArea = req.params.IdArea;
-  let DatosArea = {
-    IdUsuario: req.body.IdUsuario,
-  };
-  if (!IdArea) {
-    return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
-  }
-  mc.query("UPDATE areatrabajo SET ? WHERE IdArea = ?", [DatosArea, IdArea], function (error, results, fields) {
-    if (error) throw error;
-    return res.status(200).json({ "Mensaje": "El area de trabajo con id = " + IdArea + " ha sido actualizado" });
-  });
-});
-
-//ID = 13 - PUT = delegar área de trabajo *
-app.put('/area/delegar/:IdArea', (req, res) => {
-  let IdArea = req.params.IdArea;
-  let DatosArea = {
-    IdUsuario: null,
   };
   if (!IdArea) {
     return res.status(400).send({ message: 'Debe proveer el id de una usuario existente' });
@@ -694,12 +682,11 @@ app.get('/bloque/obtener/:Idreserva', function (req, res) {
 });
 
 
-//ID = 21 - GET = obtener alerta de desuso de aula 
-app.post('/reporte/obtener/:IdUsuario', function (req, res) {
-  let IdUsuario = req.params.IdUsuario;
+//ID = 21 - GET = obtener alerta de desuso de aula          --------------------cambio
+app.post('/reporte/obtener', function (req, res) {
   let DiaClases = req.body.DiaClases;
-  let IdBloque = req.body.IdBloque;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso FROM areatrabajo  INNER JOIN aula ON areatrabajo.IdArea  = aula.IdArea  INNER JOIN sensor ON aula.IdAula = sensor.IdAula  INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1  INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN contiene ON reserva.IdReserva = contiene.IdReserva AND contiene.IdBloque = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso  INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE areatrabajo.IdUsuario = ?',[DiaClases, IdBloque,IdUsuario], function (error, results, fields) {
+  let IdSede = req.body.IdSede;
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera',[IdSede,DiaClases], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
