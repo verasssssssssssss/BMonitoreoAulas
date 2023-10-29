@@ -18,11 +18,13 @@ var bcrypt = require("bcrypt");
   },
 */
 
+
+/*
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
 const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//0438gTbqyDw9WCgYIARAAGAQSNwF-L9IrtkFuPCigNpysPMIPFm_iK7bApnQ7HvdS0Ns16pVxWajDSQY1lMhvzfJxsRPF46Jh0_U";
+// const REFRESH_TOKEN = "1//0438gTbqyDw9WCgYIARAAGAQSNwF-L9IrtkFuPCigNpysPMIPFm_iK7bApnQ7HvdS0Ns16pVxWajDSQY1lMhvzfJxsRPF46Jh0_U";
 
 const oauth2Client = new OAuth2(
   CLIENT_ID,
@@ -44,7 +46,7 @@ const smtpTransport = nodemailer.createTransport({
     accessToken: accessToken,
   }
 });
-
+*/
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
@@ -57,7 +59,7 @@ app.post("/EnviarCorreo", (req, res) => {
     ApeDirector: req.body.ApeDirector,
     NomSede: req.body.NomSede,
     NomCurso:req.body.NomCurso, 
-    NomProfesor:req.body.NomProfesor, 
+    Codigo:req.body.Codigo, 
     FechaReporte:req.body.FechaReporte, 
     NomCarrera:req.body.NomCarrera, 
     NomEncargado:req.body.NomEncargado,
@@ -124,14 +126,13 @@ app.post("/EnviarCorreo", (req, res) => {
     </div>
     <div class="contenido">
       <p>Estimada ${datoscorreo.NomDirector} ${datoscorreo.ApeDirector} </p>
-      <p>Me dirijo a usted en mi capacidad de encargado de aula de la sede ${datoscorreo.NomSede}, con el propósito de informarle sobre una situación relacionada con el uso de las instalaciones.</p>
-      <p>El motivo de mi comunicación es notificarle que el aula de clases designada con el nombre ${datoscorreo.NomAula} ha permanecido desocupada el día de la fecha, ${datoscorreo.FechaReporte},
-       a pesar de que había sido previamente reservada para el curso ${datoscorreo.NomCurso} impartido por el profesor ${datoscorreo.NomProfesor} de la carrera ${datoscorreo.NomCarrera}.</p>
-      <p>Adjunto a este correo, encontrará una captura fotográfica que muestra el estado actual del aula en cuestión como evidencia del desuso.</p>
+      <p>Le notifico que en el campus ${datoscorreo.NomSede}, el aula ${datoscorreo.NomAula}
+      reservada para la clase ${datoscorreo.NomCurso} con código ${datoscorreo.Codigo} 
+      de la carrera ${datoscorreo.NomCarrera} se encontró desocupada durante horarios de clases el 
+      ${datoscorreo.FechaReporte}.</p>
+      <p>Esta información fue ratificada por el encargado de aula ${datoscorreo.NomEncargado}, 
+      se adjunta captura fotográfica del aula en el momento de desusos como evidencia.</p>
       <img class="imagen-centrada" src=${datoscorreo.CapturaFotografica}>
-      <p>Agradezco su atención a esta situación y quedo a la espera de sus indicaciones al respecto.</p>
-      <p class="firma">Atentamente,</p>
-      <p class="firma">${datoscorreo.NomEncargado}</p>
       <p class="pie-pagina">Sistema de monitoreo de aulas universidad del BIO-BIO.</p>
     </div>
   </div>
@@ -171,10 +172,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
-  user: "uufsbfrbzl4lpcw5",
-  password: "mrgRcrDBfcUtGeh1zvI5",
-  database: "bdhbifq8excixbrx1u0t",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 mc.connect();
 
@@ -188,6 +189,14 @@ const mc = mysql.createConnection({
   user: "root",
   password: "",
   database: "psensores",
+});
+mc.connect();
+
+const mc = mysql.createConnection({
+  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
+  user: "uufsbfrbzl4lpcw5",
+  password: "mrgRcrDBfcUtGeh1zvI5",
+  database: "bdhbifq8excixbrx1u0t",
 });
 mc.connect();
 
@@ -686,7 +695,7 @@ app.get('/bloque/obtener/:Idreserva', function (req, res) {
 app.post('/reporte/obtener', function (req, res) {
   let DiaClases = req.body.DiaClases;
   let IdSede = req.body.IdSede;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera',[IdSede,DiaClases], function (error, results, fields) {
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera',[IdSede,DiaClases], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -792,12 +801,37 @@ app.get('/reporte/listado/carrera', function (req, res) {
 //ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
 app.get('/datos/tempHumedad', function (req, res) {
   //SELECT Temperatura, Humedad FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10;', function (error, results, fields) {
+  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10', function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
       message: 'listado de datos sobre Temperatura y Humedad sin sala'
+    });
+  });
+});
+
+//ID = random - GET = listado de datos sobre CO2 y tvoc sin sala
+app.get('/datos/co2tvoc', function (req, res) {
+  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha,NivelesDeCO2, Tvoc FROM datos ORDER BY Fecha DESC LIMIT 7', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos sobre CO2 y tvoc sin sala'
+    });
+  });
+});
+
+app.get('/datos/inteisdadluminica', function (req, res) {
+  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha, IntensidadLuminica FROM ( SELECT Fecha, IntensidadLuminica FROM datos ORDER BY Fecha DESC LIMIT 10) AS ultimos_10 ORDER BY Fecha ASC', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos intensidad luminica sin sala'
     });
   });
 });
