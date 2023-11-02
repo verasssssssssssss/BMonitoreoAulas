@@ -172,10 +172,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
+  user: "uufsbfrbzl4lpcw5",
+  password: "mrgRcrDBfcUtGeh1zvI5",
+  database: "bdhbifq8excixbrx1u0t",
 });
 mc.connect();
 
@@ -360,8 +360,6 @@ app.put('/usuario/editar', (req, res) => {
     return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + body.IdUsuario + " ha quedado sin encargado" });
   });
 });
-
-
 
 //ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede * ------------------cambio-----listo
 app.get('/area/listado/:IdSede', function (req, res) {
@@ -607,7 +605,6 @@ app.post('/sensor/crear', function (req, res) {
   }
 });
 
-
 //ID = 18 - PUT = editar sensor 
 app.put('/sensor/editar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
@@ -733,9 +730,6 @@ app.get('/obtener/datos/coordinadora/:IdSede', function (req, res) {
   });
 });
 
-
-
-
 //ID = random - POST = crear una reseva                                               ----*
 app.post('/reserva/crear', function (req, res) {
   let datosreserva = {
@@ -780,8 +774,6 @@ app.post('/reserva/crear/bloque', function (req, res) {
   }
 });
 
-
-
 //ID = 25 - GET = listado de todos los reportes segun la sede y la carrera 
 app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
@@ -796,7 +788,6 @@ app.get('/reporte/listado/carrera', function (req, res) {
     });
   });
 });
-
 
 //ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
 app.get('/datos/tempHumedad', function (req, res) {
@@ -861,8 +852,6 @@ app.get('/carreras/listado/:IdSede', function (req, res) {
     });
   });
 });
-
-
 
 //ID = random - DELETE = eliminar reporte
 app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
@@ -953,7 +942,6 @@ app.post('/enviarcorreo', function (req, res) {
   }
 });
 
-
 app.post('/enviar-datos', (req, res) => {
   const temperature = req.body.temperature;
   const humidity = req.body.humidity;
@@ -972,7 +960,6 @@ app.post('/enviar-datos', (req, res) => {
     }
   });
 });
-
 
 //Rutass
 app.get("/", (req, res, next) => {
