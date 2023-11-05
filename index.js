@@ -48,6 +48,27 @@ const smtpTransport = nodemailer.createTransport({
 });
 */
 
+const horaEjecucion = '00:00:00';
+const ahora = new Date();
+const horaDeseada = new Date(ahora.toDateString() + ' ' + horaEjecucion);
+let tiempoRestante = horaDeseada - ahora;
+if (tiempoRestante < 0) {
+  tiempoRestante += 24 * 60 * 60 * 1000; 
+}
+setTimeout(realizarConsulta, tiempoRestante);
+
+
+function realizarConsulta() {
+  const sql = 'UPDATE sede SET Activa = 1';
+  mc.query(sql, (error, results) => {
+    if (error) {
+      console.error(error);
+    } else {
+      console.log('Resultado de la consulta:', results);
+    }
+  });
+}
+
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -172,10 +193,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
-  user: "uufsbfrbzl4lpcw5",
-  password: "mrgRcrDBfcUtGeh1zvI5",
-  database: "bdhbifq8excixbrx1u0t",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 mc.connect();
 
@@ -309,7 +330,7 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/:IdCiudad', function (req, res) {
   let IdCiudad = req.params.IdCiudad;
-  mc.query('SELECT sede.IdSede,sede.NomSede, sede.Acronimo FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+  mc.query('SELECT sede.IdSede,sede.NomSede, sede.Acronimo, sede.Activa, sede.FechaActivacion FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -779,7 +800,7 @@ app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
   let IdCarrera = req.body.IdCarrera;
 
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario', [IdSede, IdCarrera], function (error, results, fields) {
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.IdUsuario, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario', [IdSede, IdCarrera], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
