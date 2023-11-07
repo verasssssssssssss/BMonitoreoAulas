@@ -193,10 +193,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
+  user: "uufsbfrbzl4lpcw5",
+  password: "mrgRcrDBfcUtGeh1zvI5",
+  database: "bdhbifq8excixbrx1u0t",
 });
 mc.connect();
 
@@ -940,6 +940,35 @@ app.get('/reserva/Obtener/:IdReserva', function (req, res) {
   });
 });
 
+
+//ID = random - PUT = Se ha activado el campus
+app.put('/campus/activar', function (req, res) {
+  let id = req.body.id;
+  let fecha= null;
+  mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?',[fecha, id], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se ha activado el campus con id '+id
+    });
+  });
+});
+
+//ID = random - PUT = Se ha desactivado el campus
+app.put('/campus/desactivar', function (req, res) {
+  let id = req.body.id;
+  let fecha = new Date();
+  mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha,id], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se ha desactivado el campus con id '+id
+    });
+  });
+});
+
 //ID = random - PUT = editar estado de uso del aula
 app.put('/reserva/editar/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
@@ -949,6 +978,33 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
       error: false,
       data: results,
       message: 'Se aeditado el estado de la reserva'
+    });
+  });
+});
+
+//ID = random - GET = obtener el estado de uso del aula
+app.get('/campus/Obtener/Estado/:idCampus', function (req, res) {
+  let idCampus = req.params.idCampus;
+  mc.query('SELECT Activa FROM sede WHERE IdSede= ?', idCampus, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Estado del campus con id '+idCampus
+    });
+  });
+});
+
+
+//ID = random - GET = obtener el estado de uso del aula
+app.get('/reserva/Obtener/:IdReserva', function (req, res) {
+  let IdReserva = req.params.IdReserva;
+  mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Estado de uso del aula'
     });
   });
 });
@@ -966,17 +1022,34 @@ app.post('/enviarcorreo', function (req, res) {
 app.post('/enviar-datos', (req, res) => {
   const temperature = req.body.temperature;
   const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Nuevo valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Nuevo valor de niveles de CO2
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
 
   // Inserta los datos en la tabla "datos"
-  const insertQuery = 'INSERT INTO datos (Fecha, Reportado, Correcto, IntensidadLuminica, NivelesDeCO2, Temperatura, Humedad, CapturaFotografica, idSensor) VALUES (NOW(), 0, 0, ?, ?, ?, ?, "", 1)';
-  mc.query(insertQuery, [luminosity, co2Level, temperature, humidity], (err, result) => {
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  mc.query(insertQuery, values, (err, result) => {
     if (err) {
       console.error('Error al insertar datos en la base de datos: ' + err.message);
       res.status(500).json({ error: 'Error al insertar datos' });
     } else {
-      console.log('Datos insertados en la base de datos');
+      console.log('Datos insertados en la base de datos con éxito.');
       res.json({ message: 'Datos recibidos y almacenados correctamente.' });
     }
   });
