@@ -193,10 +193,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
+  user: "uhjkhnb0l8v5ywrt",
+  password: "jAWShTFqjupljAoFKBIq",
+  database: "bn078wrpliphhhlaavs7",
 });
 mc.connect();
 
