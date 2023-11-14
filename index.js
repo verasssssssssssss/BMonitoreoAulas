@@ -193,10 +193,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
-  user: "uhjkhnb0l8v5ywrt",
-  password: "jAWShTFqjupljAoFKBIq",
-  database: "bn078wrpliphhhlaavs7",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 mc.connect();
 
@@ -214,10 +214,10 @@ const mc = mysql.createConnection({
 mc.connect();
 
 const mc = mysql.createConnection({
-  host: "bdhbifq8excixbrx1u0t-mysql.services.clever-cloud.com",
-  user: "uufsbfrbzl4lpcw5",
-  password: "mrgRcrDBfcUtGeh1zvI5",
-  database: "bdhbifq8excixbrx1u0t",
+  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
+  user: "uhjkhnb0l8v5ywrt",
+  password: "jAWShTFqjupljAoFKBIq",
+  database: "bn078wrpliphhhlaavs7",
 });
 mc.connect();
 
@@ -291,11 +291,13 @@ app.use('/', (req, res, next) => {
 */
 //ID = 22 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear', function (req, res) {
-  const fechaActual = new Date();
-  console.log(fechaActual);
+  let fecha = new Date();fecha
+  fecha.setHours(fecha.getHours() - 3)
+
+
   let datosReporte = {
     IdCurso: req.body.IdCurso,
-    FechaReporte: fechaActual,
+    FechaReporte: fecha,
     IdCarrera: req.body.IdCarrera,
     IdUsuario: req.body.IdUsuario,
     IdAula: req.body.IdAula,
@@ -353,7 +355,7 @@ app.put('/usuario/cambiar/sede', function (req, res) {
   });
 });
 
-//ID = random - GET = Datos de encargado de aula segun id *
+//ID = random - GET = Datos de usuario segun segun id *
 app.get('/usuario/obtener/:IdUsuario', function (req, res) {
   let IdUsuario = req.params.IdUsuario;
   mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Fotografia, Mail, Contrasenia  FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
@@ -361,7 +363,20 @@ app.get('/usuario/obtener/:IdUsuario', function (req, res) {
     return res.send({
       error: false,
       data: results,
-      message: 'Datos de encargado de aula segun id ' + IdUsuario
+      message: 'Datos usuario segun id'
+    });
+  });
+});
+
+//ID = random - GET = Datos de encargado de aula segun id *
+app.get('/encargado/obtener/:IdCiudad', function (req, res) {
+  let IdCiudad = req.params.IdCiudad;
+  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Fotografia,Mail,Contrasenia FROM usuario WHERE IdCiudad = ? AND IdRol = 2', IdCiudad, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Datos de encargado de aula segun la ciudad'
     });
   });
 });
@@ -454,7 +469,7 @@ app.post('/encargado/crear', function (req, res) {
     Mail: req.body.Mail,
     Contrasenia: bcrypt.hashSync(req.body.Contrasenia, 10),
     IdRol: 2,
-    IdSede: req.body.IdSede,
+    IdCiudad : req.body.IdCiudad,
     Fotografia: req.body.Fotografia,
   };
   console.log(datosEncargado);
@@ -800,7 +815,8 @@ app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
   let IdCarrera = req.body.IdCarrera;
 
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, rep.NomCurso, rep.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.IdUsuario, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario', [IdSede, IdCarrera], function (error, results, fields) {
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.IdUsuario, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN curso ON carrera.IdCarrera = curso.IdCarrera INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario ORDER BY rep.FechaReporte DESC', [IdSede, IdCarrera], function (error, results, fields) {
+    console.log(results);
     if (error) throw error;
     return res.send({
       error: false,
@@ -851,7 +867,7 @@ app.get('/datos/inteisdadluminica', function (req, res) {
 //ID = 23 - GET = listado de todos los reportes segun la sede 
 app.get('/reporte/listado/:IdSede', function (req, res) {
   let IdSede = req.params.IdSede;
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso', IdSede, function (error, results, fields) {
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso ORDER BY rep.FechaReporte DESC', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -959,6 +975,8 @@ app.put('/campus/activar', function (req, res) {
 app.put('/campus/desactivar', function (req, res) {
   let id = req.body.id;
   let fecha = new Date();
+  fecha.setHours(fecha.getHours() - 3)
+
   mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha,id], function (error, results, fields) {
     if (error) throw error;
     return res.send({
