@@ -182,7 +182,7 @@ app.post("/EnviarCorreo", (req, res) => {
 //CORS middleware
 app.use(function (req, res, next) {
   //Enabling CORS //["http://localhost:4200","https://cerulean-tarsier-37d919.netlify.app"]
-  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Origin", "https://deft-treacle-d2a559.netlify.app");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
@@ -192,10 +192,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
+  user: "uhjkhnb0l8v5ywrt",
+  password: "jAWShTFqjupljAoFKBIq",
+  database: "bn078wrpliphhhlaavs7",
 });
 mc.connect();
 
