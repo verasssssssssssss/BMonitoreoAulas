@@ -202,249 +202,6 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
-
-
-/*
-const dbConfig1 = {
-  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
-  user: "uyz0sgl2ovir2btl",
-  password: "gl0RUkVwxnLQUdzHj0sG",
-  database: "bps7qntn2noayhnvqkgm",
-};
-
-const dbConfig2 = {
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
-};
-
-const dbConfig3 = {
-  host: "bunseutgqbyqpe0t9z7o-mysql.services.clever-cloud.com",
-  user: "urbeqxgziryetlfv",
-  password: "IR6x7tjwdxaKvAOOD0O1",
-  database: "bunseutgqbyqpe0t9z7o",
-};
-
-
-const connection1 = mysql.createConnection(dbConfig1);
-const connection2 = mysql.createConnection(dbConfig2);
-const connection3 = mysql.createConnection(dbConfig3);
-
-
-
-
-function postDataToDB1(data, insertQuery) {
-  connection1.connect((err) => {
-    if (err) throw err;
-    console.log('Conectado a la primera base de datos');
-
-    // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = insertQuery;
-    connection1.query(query, data, (error, results) => {
-      if (error) throw error;
-      console.log('Datos insertados en la primera base de datos:', results);
-    });
-
-    connection1.end();
-  });
-}
-
-function postDataToDB2(data, insertQuery){
-  connection2.connect((err) => {
-    if (err) throw err;
-    console.log('Conectado a la primera base de datos');
-
-    // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = insertQuery;
-    connection2.query(query, data, (error, results) => {
-      if (error) throw error;
-      console.log('Datos insertados en la primera base de datos:', results);
-    });
-
-    connection2.end();
-  });
-}
-
-function postDataToDB3(data, insertQuery) {
-  connection3.connect((err) => {
-    if (err) throw err;
-    console.log('Conectado a la primera base de datos');
-
-    // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = insertQuery;
-    connection3.query(query, data, (error, results) => {
-      if (error) throw error;
-      console.log('Datos insertados en la primera base de datos:', results);
-    });
-
-    connection3.end();
-  });
-
-}
-
-/////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////
-
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  postDataToDB1(values,insertQuery);
-  postDataToDB2(values,insertQuery);
-  postDataToDB3(values,insertQuery);
-
-  res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-});
-
-
-*/
-
-
-
-
-/*
-
-//ID = 26 - POST = insertar datos 
-app.post('/datos/registrar', function (req, res) {
-  let datosDatos = {
-    Fecha: req.body.Fecha,
-    Reportado: req.body.Reportado,
-    Correcto: req.body.Correcto,
-    IntensidadLuminica: req.body.IntensidadLuminica,
-    NivelesDeCO2: req.body.NivelesDeCO2,
-    Temperatura: req.body.Temperatura,
-    Humedad: req.body.Humedad,
-    IdSensor: req.body.IdSensor,
-  };
-
-
-  
-
-  if (mc) {
-    mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
-      if (error) {
-        res.status(500).json({ "Mensaje": "Error" });
-      }else{
-        console.log(1+"si")
-      }
-    });
-  }
-
-  if (mc1) {
-    mc1.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
-      if (error) {
-        res.status(500).json({ "Mensaje": "Error" });
-      }else{
-        console.log(2+"si")
-      }
-    });
-  }
-  if (mc2) {
-    mc2.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
-      if (error) {
-        res.status(500).json({ "Mensaje": "Error" });
-      }else{
-        console.log(3+"si")
-      }
-    });
-  }
-  res.status(201).json({ "Mensaje": "Insertado" });
-});
-
-
-*/
-
-
-/*
-
-app.get('/sede/obtener/:IdCiudad', function (req, res) {
-  let IdCiudad = req.params.IdCiudad;
-  mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
-    if (error) throw error;
-  });
-
-  mc1.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
-    if (error) throw error;
-  });
-});
-
-const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
-});
-mc.connect();
-
-const mc = mysql.createConnection({
-  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
-  user: "uhjkhnb0l8v5ywrt",
-  password: "jAWShTFqjupljAoFKBIq",
-  database: "bn078wrpliphhhlaavs7",
-});
-mc.connect();
-
-*/
-
-
 // sensores
 /////////////////////////////////////////////////////////////
 
@@ -1209,6 +966,41 @@ app.get('/campus/Obtener/Estado/:idCampus', function (req, res) {
   });
 });
 
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos con éxito.');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
 
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
