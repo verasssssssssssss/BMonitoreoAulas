@@ -201,9 +201,6 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-
-bjx67tth5lqo4fhqtdjt
-
 // sensores
 /////////////////////////////////////////////////////////////
 
