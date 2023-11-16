@@ -971,7 +971,7 @@ app.post('/enviar-datos', (req, res) => {
   const luminosity = req.body.luminosity; // Valor de intensidad lumínica
   const co2Level = req.body.co2Level;     // Valor de niveles de CO2
   const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-  let fecha = new Date();fecha
+  let fecha = new Date();
   fecha.setHours(fecha.getHours() - 3)
   // Inserta los datos en la tabla "datos"
   const insertQuery = `
