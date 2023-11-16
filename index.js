@@ -13,8 +13,10 @@ var bcrypt = require("bcrypt");
 /*
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+
+    "scripts": {
+    "start":"nodemon index.js",
   },
 */
 
@@ -193,17 +195,89 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bn078wrpliphhhlaavs7-mysql.services.clever-cloud.com",
-  user: "uhjkhnb0l8v5ywrt",
-  password: "jAWShTFqjupljAoFKBIq",
-  database: "bn078wrpliphhhlaavs7",
+  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
+  user: "uyz0sgl2ovir2btl",
+  password: "gl0RUkVwxnLQUdzHj0sG",
+  database: "bps7qntn2noayhnvqkgm",
 });
 mc.connect();
+
+const mc1 = mysql.createConnection({
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
+});
+mc1.connect();
+
+
+const mc2 = mysql.createConnection({
+  host: "bunseutgqbyqpe0t9z7o-mysql.services.clever-cloud.com",
+  user: "urbeqxgziryetlfv",
+  password: "IR6x7tjwdxaKvAOOD0O1",
+  database: "bunseutgqbyqpe0t9z7o",
+});
+mc2.connect();
+
+
+
+
+
+/////////////////////////////////////////////////////////////
+
+//ID = 26 - POST = insertar datos 
+app.post('/datos/registrar', function (req, res) {
+  let datosDatos = {
+    Fecha: req.body.Fecha,
+    Reportado: req.body.Reportado,
+    Correcto: req.body.Correcto,
+    IntensidadLuminica: req.body.IntensidadLuminica,
+    NivelesDeCO2: req.body.NivelesDeCO2,
+    Temperatura: req.body.Temperatura,
+    Humedad: req.body.Humedad,
+    IdSensor: req.body.IdSensor,
+  };
+
+  if (mc) {
+    mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+    });
+  }
+
+  if (mc1) {
+    mc1.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+    });
+  }
+  if (mc2) {
+    mc2.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+    });
+  }
+  res.status(201).json({ "Mensaje": "Insertado" });
+});
 
 /////////////////////////////////////////////////////////////
 
 
 /*
+
+app.get('/sede/obtener/:IdCiudad', function (req, res) {
+  let IdCiudad = req.params.IdCiudad;
+  mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+    if (error) throw error;
+  });
+
+  mc1.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
+    if (error) throw error;
+  });
+});
 
 const mc = mysql.createConnection({
   host: "localhost",
@@ -901,31 +975,6 @@ app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
       message: 'Reporte eliminado correctamente'
     });
   });
-});
-
-//ID = 26 - POST = insertar datos 
-app.post('/datos/registrar', function (req, res) {
-  let datosDatos = {
-    Fecha: req.body.Fecha,
-    Reportado: req.body.Reportado,
-    Correcto: req.body.Correcto,
-    IntensidadLuminica: req.body.IntensidadLuminica,
-    NivelesDeCO2: req.body.NivelesDeCO2,
-    Temperatura: req.body.Temperatura,
-    Humedad: req.body.Humedad,
-    IdSensor: req.body.IdSensor,
-  };
-
-  if (mc) {
-    mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
-      if (error) {
-        res.status(500).json({ "Mensaje": "Error" });
-      }
-      else {
-        res.status(201).json({ "Mensaje": "Insertado" });
-      }
-    });
-  }
 });
 
 //ID = random - POST = verifica si el aula esta reservada ¿?
