@@ -314,7 +314,6 @@ function postDataToDB3(data) {
 //ID = 26 - POST = insertar datos 
 app.post('/datos/registrar', function (req, res) {
   let datosDatos = {
-    IdDatos : Math.floor(Math.random() * (max - min + 1)) + min,
     Fecha: req.body.Fecha,
     Reportado: req.body.Reportado,
     Correcto: req.body.Correcto,
