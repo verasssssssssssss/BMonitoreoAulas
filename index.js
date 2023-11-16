@@ -194,7 +194,6 @@ app.use(function (req, res, next) {
 });
 
 
-/*
 const mc = mysql.createConnection({
   host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
   user: "uyz0sgl2ovir2btl",
@@ -203,24 +202,44 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-const mc1 = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos con éxito.');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
 });
-mc1.connect();
 
 
-const mc2 = mysql.createConnection({
-  host: "bunseutgqbyqpe0t9z7o-mysql.services.clever-cloud.com",
-  user: "urbeqxgziryetlfv",
-  password: "IR6x7tjwdxaKvAOOD0O1",
-  database: "bunseutgqbyqpe0t9z7o",
-});
-mc2.connect();
-
-*/
+/*
 const dbConfig1 = {
   host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
   user: "uyz0sgl2ovir2btl",
@@ -248,17 +267,7 @@ const connection2 = mysql.createConnection(dbConfig2);
 const connection3 = mysql.createConnection(dbConfig3);
 
 
-const min = 100;
-const max = 200;
 
-
-const mc = mysql.createConnection({
-  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
-  user: "uyz0sgl2ovir2btl",
-  password: "gl0RUkVwxnLQUdzHj0sG",
-  database: "bps7qntn2noayhnvqkgm",
-});
-mc.connect();
 
 function postDataToDB1(data, insertQuery) {
   connection1.connect((err) => {
@@ -341,49 +350,10 @@ app.post('/enviar-datos', (req, res) => {
   postDataToDB1(values,insertQuery);
   postDataToDB2(values,insertQuery);
   postDataToDB3(values,insertQuery);
-  
+
   res.json({ message: 'Datos recibidos y almacenados correctamente.' });
 });
 
-
-
-/*
-
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
 
 */
 
