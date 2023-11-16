@@ -260,13 +260,13 @@ const mc = mysql.createConnection({
 });
 mc.connect();
 
-function postDataToDB1(data) {
+function postDataToDB1(data, insertQuery) {
   connection1.connect((err) => {
     if (err) throw err;
     console.log('Conectado a la primera base de datos');
 
     // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = 'INSERT INTO datos SET ?';
+    const query = insertQuery;
     connection1.query(query, data, (error, results) => {
       if (error) throw error;
       console.log('Datos insertados en la primera base de datos:', results);
@@ -276,13 +276,13 @@ function postDataToDB1(data) {
   });
 }
 
-function postDataToDB2(data) {
+function postDataToDB2(data, insertQuery){
   connection2.connect((err) => {
     if (err) throw err;
     console.log('Conectado a la primera base de datos');
 
     // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = 'INSERT INTO datos SET ?';
+    const query = insertQuery;
     connection2.query(query, data, (error, results) => {
       if (error) throw error;
       console.log('Datos insertados en la primera base de datos:', results);
@@ -292,13 +292,13 @@ function postDataToDB2(data) {
   });
 }
 
-function postDataToDB3(data) {
+function postDataToDB3(data, insertQuery) {
   connection3.connect((err) => {
     if (err) throw err;
     console.log('Conectado a la primera base de datos');
 
     // Ejemplo de inserción de datos en una tabla de la base de datos 1
-    const query = 'INSERT INTO datos SET ?';
+    const query = insertQuery;
     connection3.query(query, data, (error, results) => {
       if (error) throw error;
       console.log('Datos insertados en la primera base de datos:', results);
@@ -311,26 +311,81 @@ function postDataToDB3(data) {
 
 /////////////////////////////////////////////////////////////
 
-//ID = 26 - POST = insertar datos 
-app.post('/datos/registrar', function (req, res) {
-  let datosDatos = {
-    Fecha: req.body.Fecha,
-    Reportado: req.body.Reportado,
-    Correcto: req.body.Correcto,
-    IntensidadLuminica: req.body.IntensidadLuminica,
-    NivelesDeCO2: req.body.NivelesDeCO2,
-    Temperatura: req.body.Temperatura,
-    Humedad: req.body.Humedad,
-    IdSensor: req.body.IdSensor,
-  };
+////////////////////////////////////////////////////////////
 
-  postDataToDB1(datosDatos);
-  postDataToDB2(datosDatos);
-  postDataToDB3(datosDatos);
-  res.status(201).json({ "Mensaje": "Insertado" });
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  postDataToDB1(values,insertQuery);
+  postDataToDB2(values,insertQuery);
+  postDataToDB3(values,insertQuery);
+  
+  res.json({ message: 'Datos recibidos y almacenados correctamente.' });
 });
 
-/////////////////////////////////////////////////////////////
+
+
+/*
+
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos con éxito.');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
+
+*/
 
 
 
@@ -1208,41 +1263,6 @@ app.post('/enviarcorreo', function (req, res) {
   }
 });
 
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
 
 //Rutass
 app.get("/", (req, res, next) => {
