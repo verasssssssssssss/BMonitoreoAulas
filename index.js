@@ -193,6 +193,8 @@ app.use(function (req, res, next) {
   next();
 });
 
+
+/*
 const mc = mysql.createConnection({
   host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
   user: "uyz0sgl2ovir2btl",
@@ -218,11 +220,123 @@ const mc2 = mysql.createConnection({
 });
 mc2.connect();
 
+*/
+const dbConfig1 = {
+  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
+  user: "uyz0sgl2ovir2btl",
+  password: "gl0RUkVwxnLQUdzHj0sG",
+  database: "bps7qntn2noayhnvqkgm",
+};
+
+const dbConfig2 = {
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
+};
+
+const dbConfig3 = {
+  host: "bunseutgqbyqpe0t9z7o-mysql.services.clever-cloud.com",
+  user: "urbeqxgziryetlfv",
+  password: "IR6x7tjwdxaKvAOOD0O1",
+  database: "bunseutgqbyqpe0t9z7o",
+};
 
 
+const connection1 = mysql.createConnection(dbConfig1);
+const connection2 = mysql.createConnection(dbConfig2);
+const connection3 = mysql.createConnection(dbConfig3);
 
+
+const min = 100;
+const max = 200;
+
+
+const mc = mysql.createConnection({
+  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
+  user: "uyz0sgl2ovir2btl",
+  password: "gl0RUkVwxnLQUdzHj0sG",
+  database: "bps7qntn2noayhnvqkgm",
+});
+mc.connect();
+
+function postDataToDB1(data) {
+  connection1.connect((err) => {
+    if (err) throw err;
+    console.log('Conectado a la primera base de datos');
+
+    // Ejemplo de inserción de datos en una tabla de la base de datos 1
+    const query = 'INSERT INTO datos SET ?';
+    connection1.query(query, data, (error, results) => {
+      if (error) throw error;
+      console.log('Datos insertados en la primera base de datos:', results);
+    });
+
+    connection1.end();
+  });
+}
+
+function postDataToDB2(data) {
+  connection2.connect((err) => {
+    if (err) throw err;
+    console.log('Conectado a la primera base de datos');
+
+    // Ejemplo de inserción de datos en una tabla de la base de datos 1
+    const query = 'INSERT INTO datos SET ?';
+    connection2.query(query, data, (error, results) => {
+      if (error) throw error;
+      console.log('Datos insertados en la primera base de datos:', results);
+    });
+
+    connection2.end();
+  });
+}
+
+function postDataToDB3(data) {
+  connection3.connect((err) => {
+    if (err) throw err;
+    console.log('Conectado a la primera base de datos');
+
+    // Ejemplo de inserción de datos en una tabla de la base de datos 1
+    const query = 'INSERT INTO datos SET ?';
+    connection3.query(query, data, (error, results) => {
+      if (error) throw error;
+      console.log('Datos insertados en la primera base de datos:', results);
+    });
+
+    connection3.end();
+  });
+
+}
 
 /////////////////////////////////////////////////////////////
+
+//ID = 26 - POST = insertar datos 
+app.post('/datos/registrar', function (req, res) {
+  let datosDatos = {
+    IdDatos : Math.floor(Math.random() * (max - min + 1)) + min,
+    Fecha: req.body.Fecha,
+    Reportado: req.body.Reportado,
+    Correcto: req.body.Correcto,
+    IntensidadLuminica: req.body.IntensidadLuminica,
+    NivelesDeCO2: req.body.NivelesDeCO2,
+    Temperatura: req.body.Temperatura,
+    Humedad: req.body.Humedad,
+    IdSensor: req.body.IdSensor,
+  };
+
+  postDataToDB1(datosDatos);
+  postDataToDB2(datosDatos);
+  postDataToDB3(datosDatos);
+  res.status(201).json({ "Mensaje": "Insertado" });
+});
+
+/////////////////////////////////////////////////////////////
+
+
+
+
+/*
 
 //ID = 26 - POST = insertar datos 
 app.post('/datos/registrar', function (req, res) {
@@ -237,10 +351,15 @@ app.post('/datos/registrar', function (req, res) {
     IdSensor: req.body.IdSensor,
   };
 
+
+  
+
   if (mc) {
     mc.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
       if (error) {
         res.status(500).json({ "Mensaje": "Error" });
+      }else{
+        console.log(1+"si")
       }
     });
   }
@@ -249,6 +368,8 @@ app.post('/datos/registrar', function (req, res) {
     mc1.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
       if (error) {
         res.status(500).json({ "Mensaje": "Error" });
+      }else{
+        console.log(2+"si")
       }
     });
   }
@@ -256,13 +377,16 @@ app.post('/datos/registrar', function (req, res) {
     mc2.query("INSERT INTO datos SET ?", datosDatos, function (error, results) {
       if (error) {
         res.status(500).json({ "Mensaje": "Error" });
+      }else{
+        console.log(3+"si")
       }
     });
   }
   res.status(201).json({ "Mensaje": "Insertado" });
 });
 
-/////////////////////////////////////////////////////////////
+
+*/
 
 
 /*
