@@ -971,8 +971,6 @@ app.post('/enviar-datos', (req, res) => {
   const luminosity = req.body.luminosity; // Valor de intensidad lumínica
   const co2Level = req.body.co2Level;     // Valor de niveles de CO2
   const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-  let fecha = new Date();
-  fecha.setHours(fecha.getHours() - 3)
   // Inserta los datos en la tabla "datos"
   const insertQuery = `
     INSERT INTO datos (
@@ -986,10 +984,10 @@ app.post('/enviar-datos', (req, res) => {
       Humedad, 
       CapturaFotografica, 
       idSensor
-    ) VALUES (?, 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
 
   // Valores para la inserción en la base de datos
-  const values = [fecha,luminosity, co2Level, tvoc, temperature, humidity];
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
 
   mc.query(insertQuery, values, (err, result) => {
     if (err) {
