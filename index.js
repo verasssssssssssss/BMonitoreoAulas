@@ -193,14 +193,16 @@ app.use(function (req, res, next) {
   next();
 });
 
-
 const mc = mysql.createConnection({
-  host: "bps7qntn2noayhnvqkgm-mysql.services.clever-cloud.com",
-  user: "uyz0sgl2ovir2btl",
-  password: "gl0RUkVwxnLQUdzHj0sG",
-  database: "bps7qntn2noayhnvqkgm",
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
 });
 mc.connect();
+
+
+bjx67tth5lqo4fhqtdjt
 
 // sensores
 /////////////////////////////////////////////////////////////
