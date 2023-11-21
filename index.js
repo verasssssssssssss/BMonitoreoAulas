@@ -375,10 +375,10 @@ app.get('/img', function (req, res) {
     console.log('Archivos en la carpeta:');
     archivos.forEach(archivo => {
       console.log(archivo);
-    });
-    return res.send({
-      error: false,
-      message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivos[0].archivo
+      return res.send({
+        error: false,
+        message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivo
+      });
     });
   }
 });
