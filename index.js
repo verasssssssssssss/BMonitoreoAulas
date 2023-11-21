@@ -3,7 +3,8 @@ const app = express();
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const cors = require("cors");
-
+const fs = require('fs');
+const path = require('path');
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
@@ -56,6 +57,7 @@ let tiempoRestante = horaDeseada - ahora;
 if (tiempoRestante < 0) {
   tiempoRestante += 24 * 60 * 60 * 1000; 
 }
+
 setTimeout(realizarConsulta, tiempoRestante);
 
 
@@ -68,6 +70,28 @@ function realizarConsulta() {
       console.log('Resultado de la consulta:', results);
     }
   });
+}
+
+function verificarArchivosEnCarpeta(rutaCarpeta) {
+  const rutaAbsoluta = path.join(__dirname, rutaCarpeta);
+
+  // Verificar si la ruta es un directorio
+  if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
+    console.log('La carpeta no existe');
+    return;
+  }
+
+  // Leer el contenido de la carpeta
+  const archivos = fs.readdirSync(rutaAbsoluta);
+
+  if (archivos.length === 0) {
+    console.log('La carpeta está vacía');
+  } else {
+    console.log('Archivos en la carpeta:');
+    archivos.forEach(archivo => {
+      console.log(archivo);
+    });
+  }
 }
 
 //ID = ? - POST = enviar correo de desuso de aula
@@ -148,10 +172,9 @@ app.post("/EnviarCorreo", (req, res) => {
     </div>
     <div class="contenido">
       <p>Estimada ${datoscorreo.NomDirector} ${datoscorreo.ApeDirector} </p>
-      <p>Le notifico que en el campus ${datoscorreo.NomSede}, el aula ${datoscorreo.NomAula}
-      reservada para la clase ${datoscorreo.NomCurso} con código ${datoscorreo.Codigo} 
-      de la carrera ${datoscorreo.NomCarrera} se encontró desocupada durante horarios de clases el 
-      ${datoscorreo.FechaReporte}.</p>
+      <p>Se notifica que en la sala ${datoscorreo.NomAula} del campus ${datoscorreo.NomSede},
+      reservada para ${datoscorreo.NomCurso} (${datoscorreo.Codigo})
+      de la carrera ${datoscorreo.NomCarrera} no registra asistencia el dia ${datoscorreo.FechaReporte}.</p>
       <p>Esta información fue ratificada por el encargado de aula ${datoscorreo.NomEncargado}, 
       se adjunta captura fotográfica del aula en el momento de desusos como evidencia.</p>
       <img class="imagen-centrada" src=${datoscorreo.CapturaFotografica}>
@@ -184,7 +207,7 @@ app.post("/EnviarCorreo", (req, res) => {
 //CORS middleware
 app.use(function (req, res, next) {
   //Enabling CORS //["http://localhost:4200","https://cerulean-tarsier-37d919.netlify.app"]
-  res.header("Access-Control-Allow-Origin", "https://deft-treacle-d2a559.netlify.app");
+  res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header(
     "Access-Control-Allow-Headers",
@@ -200,6 +223,28 @@ const mc = mysql.createConnection({
   database: "bjx67tth5lqo4fhqtdjt",
 });
 mc.connect();
+
+
+/*
+const mc = mysql.createConnection({
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
+});
+mc.connect();
+
+
+const mc = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
+});
+mc.connect();
+
+
+*/
 
 // sensores
 /////////////////////////////////////////////////////////////
@@ -304,6 +349,37 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
       message: 'Nombre de la ciudad segun id'
     });
   });
+});
+
+//ID = random - GET = Nombre de la Ciudad segun id *
+app.get('/img', function (req, res) {
+  const rutaAbsoluta = path.join(__dirname, '/img');
+
+  // Verificar si la ruta es un directorio
+  if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
+    console.log('La carpeta no existe');
+    return res.send({
+      error: true,
+    });
+  }
+
+  // Leer el contenido de la carpeta
+  const archivos = fs.readdirSync(rutaAbsoluta);
+
+  if (archivos.length === 0) {
+    console.log('La carpeta está vacía');
+    return res.send({
+      error: true,
+    });
+  } else {
+    console.log('Archivos en la carpeta:');
+    archivos.forEach(archivo => {
+      console.log(archivo);
+    });
+    return res.send({
+      error: false,
+    });
+  }
 });
 
 //ID = random - GET = listado de sedes segun la ciudad *
@@ -673,6 +749,23 @@ app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
     });
   });
 });
+
+/*
+
+app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
+  let IdAula = req.params.IdAula;
+  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor,contiene.IdBloque FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? JOIN contiene ON reserva.IdReserva = contiene.IdReserva WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas las reservas del aula con id ' + IdAula
+    });
+  });
+});
+
+*/
+
 
 //ID = random - GET = obtener todas los cursos de una carrera                          -----*
 app.get('/cursos/obtener/:Idcarrea', function (req, res) {
