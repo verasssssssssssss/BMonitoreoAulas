@@ -378,6 +378,7 @@ app.get('/img', function (req, res) {
     });
     return res.send({
       error: false,
+      message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivos[0].archivo
     });
   }
 });
