@@ -35,19 +35,19 @@ const oauth2Client = new OAuth2(
   REDIRECT_URI
 );
 
-oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-const accessToken = oauth2Client.getAccessToken();
-const smtpTransport = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: "monitoreoaulas@gmail.com",
-    clientId: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    refreshToken: REFRESH_TOKEN,
-    accessToken: accessToken,
-  }
-});
+// oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+// const accessToken = oauth2Client.getAccessToken();
+// const smtpTransport = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     type: "OAuth2",
+//     user: "monitoreoaulas@gmail.com",
+//     clientId: CLIENT_ID,
+//     clientSecret: CLIENT_SECRET,
+//     refreshToken: REFRESH_TOKEN,
+//     accessToken: accessToken,
+//   }
+// });
 
 
 const horaEjecucion = '00:00:00';
@@ -352,36 +352,36 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 });
 
 //ID = random - GET = Nombre de la Ciudad segun id *
-app.get('/img', function (req, res) {
-  const rutaAbsoluta = path.join(__dirname, '/img');
+// app.get('/img', function (req, res) {
+//   const rutaAbsoluta = path.join(__dirname, '/img');
 
-  // Verificar si la ruta es un directorio
-  if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
-    console.log('La carpeta no existe');
-    return res.send({
-      error: true,
-    });
-  }
+//   // Verificar si la ruta es un directorio
+//   if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
+//     console.log('La carpeta no existe');
+//     return res.send({
+//       error: true,
+//     });
+//   }
 
-  // Leer el contenido de la carpeta
-  const archivos = fs.readdirSync(rutaAbsoluta);
+//   // Leer el contenido de la carpeta
+//   const archivos = fs.readdirSync(rutaAbsoluta);
 
-  if (archivos.length === 0) {
-    console.log('La carpeta está vacía');
-    return res.send({
-      error: true,
-    });
-  } else {
-    console.log('Archivos en la carpeta:');
-    archivos.forEach(archivo => {
-      console.log(archivo);
-      return res.send({
-        error: false,
-        message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivo
-      });
-    });
-  }
-});
+//   if (archivos.length === 0) {
+//     console.log('La carpeta está vacía');
+//     return res.send({
+//       error: true,
+//     });
+//   } else {
+//     console.log('Archivos en la carpeta:');
+//     archivos.forEach(archivo => {
+//       console.log(archivo);
+//       return res.send({
+//         error: false,
+//         message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivo
+//       });
+//     });
+//   }
+// });
 
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/:IdCiudad', function (req, res) {
@@ -1065,6 +1065,7 @@ app.post('/enviar-datos', (req, res) => {
   const luminosity = req.body.luminosity; // Valor de intensidad lumínica
   const co2Level = req.body.co2Level;     // Valor de niveles de CO2
   const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
   // Inserta los datos en la tabla "datos"
   const insertQuery = `
     INSERT INTO datos (
