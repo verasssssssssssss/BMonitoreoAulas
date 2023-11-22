@@ -27,7 +27,7 @@ const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
 const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04-IvvV5qBL80CgYIARAAGAQSNwF-L9IrB8kTwzopOpNnr0frixb0phH4vmo63_N2Jjl1eOB3BYH5C18Vhuo4NXIA0k_nh-V3vcg";
+const REFRESH_TOKEN = "1//04W8o4KfZQs6fCgYIARAAGAQSNwF-L9IrgPgIzQacTX8EvfJWVipUWPCDWh7Br9FLQtJEJANnSwStZJyLdC-mmhenou9AVTM-6s0";
 
 const oauth2Client = new OAuth2(
   CLIENT_ID,
@@ -35,19 +35,19 @@ const oauth2Client = new OAuth2(
   REDIRECT_URI
 );
 
-// oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-// const accessToken = oauth2Client.getAccessToken();
-// const smtpTransport = nodemailer.createTransport({
-//   service: "gmail",
-//   auth: {
-//     type: "OAuth2",
-//     user: "monitoreoaulas@gmail.com",
-//     clientId: CLIENT_ID,
-//     clientSecret: CLIENT_SECRET,
-//     refreshToken: REFRESH_TOKEN,
-//     accessToken: accessToken,
-//   }
-// });
+ oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+ const accessToken = oauth2Client.getAccessToken();
+ const smtpTransport = nodemailer.createTransport({
+   service: "gmail",
+   auth: {
+   type: "OAuth2",
+     user: "monitoreoaulas@gmail.com",
+     clientId: CLIENT_ID,
+     clientSecret: CLIENT_SECRET,
+     refreshToken: REFRESH_TOKEN,
+     accessToken: accessToken,
+   }
+ });
 
 
 const horaEjecucion = '00:00:00';
