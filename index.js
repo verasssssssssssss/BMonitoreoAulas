@@ -10,6 +10,10 @@ const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
 
+const { v4: uuidv4 } = require('uuid');
+
+
+
 
 /*
   "scripts": {
@@ -538,6 +542,23 @@ app.post('/encargado/crear', function (req, res) {
       }
     });
   }
+});
+
+app.post('/upload', express.raw({type: 'image/jpeg', limit: '10mb'}), (req, res) => {
+
+  var nombre = uuidv4();
+  const filePath = path.join(__dirname, 'img', `${nombre}.jpg`);
+
+  fs.writeFile(filePath, req.body, err => {
+      if (err) {
+          console.error(err);
+          res.status(500).send('Error al guardar la imagen');
+          return;
+      }
+
+      console.log('Archivo recibido y guardado:', filePath);
+      res.status(200).send('Imagen recibida');
+  });
 });
 
 //ID = 7 - PUT = editar datos de encargado de aula 
