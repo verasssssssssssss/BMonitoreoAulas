@@ -9,7 +9,7 @@ const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
-
+const {storage} = require('./firebase');
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -221,10 +221,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 mc.connect();
 
@@ -544,21 +544,70 @@ app.post('/encargado/crear', function (req, res) {
   }
 });
 
-app.post('/upload', express.raw({type: 'image/jpeg', limit: '10mb'}), (req, res) => {
+// app.post('/upload', express.raw({type: 'image/jpeg', limit: '10mb'}), (req, res) => {
 
-  var nombre = uuidv4();
-  const filePath = path.join(__dirname, 'img', `${nombre}.jpg`);
+//   var nombre = uuidv4();
+//   const filePath = path.join(__dirname, 'img', `${nombre}.jpg`);
 
-  fs.writeFile(filePath, req.body, err => {
-      if (err) {
-          console.error(err);
-          res.status(500).send('Error al guardar la imagen');
-          return;
+//   fs.writeFile(filePath, req.body, err => {
+//       if (err) {
+//           console.error(err);
+//           res.status(500).send('Error al guardar la imagen');
+//           return;
+//       }
+
+//       console.log('Archivo recibido y guardado:', filePath);
+//       res.status(200).send('Imagen recibida');
+//   });
+// });
+
+
+// app.post('/upload', express.raw({type: 'image/*', limit: '10mb'}), async (req, res) => {
+//   const bucket = storage.bucket('gs://imagenes-7796b.appspot.com');
+//   var nombre = uuidv4();
+//   try {
+//       await bucket.upload(`${nombre}.jpg`);
+//       res.status(200).send('Archivo subido con éxito');
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).send('Error al subir el archivo');
+//   }
+// });
+
+app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
+
+app.post('/upload', async (req, res) => {
+  // Generar un nombre único para el archivo
+
+  const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
+
+  const nombreArchivo = uuidv4() + '.jpg';
+
+  try {
+    // Crear un archivo en el bucket y escribir los datos de la imagen
+    const file = bucket.file(nombreArchivo);
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: 'image/jpeg'
       }
+    });
 
-      console.log('Archivo recibido y guardado:', filePath);
-      res.status(200).send('Imagen recibida');
-  });
+    stream.on('error', (err) => {
+      console.error('Error al subir el archivo:', err);
+      res.status(500).send('Error al subir el archivo');
+    });
+
+    stream.on('finish', () => {
+      // La imagen ha sido subida, enviar respuesta
+      res.status(200).send('Archivo subido con éxito');
+    });
+
+    // Escribir los datos en el stream y cerrarlo
+    stream.end(req.body);
+  } catch (error) {
+    console.error('Error en el catch:', error);
+    res.status(500).send('Error al procesar la solicitud');
+  }
 });
 
 //ID = 7 - PUT = editar datos de encargado de aula 
@@ -1086,6 +1135,7 @@ app.post('/enviar-datos', (req, res) => {
   const luminosity = req.body.luminosity; // Valor de intensidad lumínica
   const co2Level = req.body.co2Level;     // Valor de niveles de CO2
   const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+  const idSensor = req.body.idSensor;     // Obtener el ID del sensor desde el request body
 
   // Inserta los datos en la tabla "datos"
   const insertQuery = `
@@ -1099,16 +1149,16 @@ app.post('/enviar-datos', (req, res) => {
       Temperatura, 
       Humedad, 
       CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+      IdSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, ?)`;
 
   // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+  const values = [luminosity, co2Level, tvoc, temperature, humidity, idSensor];
 
   mc.query(insertQuery, values, (err, result) => {
     if (err) {
       console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
+      res.status(500).json({ error: 'Error al insertar datos'});
     } else {
       console.log('Datos insertados en la base de datos con éxito.');
       res.json({ message: 'Datos recibidos y almacenados correctamente.' });
