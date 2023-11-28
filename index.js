@@ -8,8 +8,6 @@ const path = require('path');
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
-var bcrypt = require("bcrypt");
-
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -71,7 +69,6 @@ function realizarConsulta() {
     if (error) {
       console.error(error);
     } else {
-      console.log('Resultado de la consulta:', results);
     }
   });
 }
@@ -81,7 +78,6 @@ function verificarArchivosEnCarpeta(rutaCarpeta) {
 
   // Verificar si la ruta es un directorio
   if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
-    console.log('La carpeta no existe');
     return;
   }
 
@@ -89,11 +85,8 @@ function verificarArchivosEnCarpeta(rutaCarpeta) {
   const archivos = fs.readdirSync(rutaAbsoluta);
 
   if (archivos.length === 0) {
-    console.log('La carpeta está vacía');
   } else {
-    console.log('Archivos en la carpeta:');
     archivos.forEach(archivo => {
-      console.log(archivo);
     });
   }
 }
@@ -101,8 +94,210 @@ function verificarArchivosEnCarpeta(rutaCarpeta) {
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors());
 
-app.post("/EnviarCorreo", (req, res) => {
+//CORS middleware
+app.use(function (req, res, next) {
+  //Enabling CORS //["http://localhost:4200","https://cerulean-tarsier-37d919.netlify.app"]
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, x-client-key, x-client-token, x-client-secret, Authorization"
+  );
+  next();
+});
+
+const mc = mysql.createConnection({
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
+});
+mc.connect();
+
+
+/*
+const mc = mysql.createConnection({
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
+});
+mc.connect();
+
+
+const mc = mysql.createConnection({
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
+});
+mc.connect();
+
+
+*/
+
+// sensores
+/////////////////////////////////////////////////////////////
+
+//ID = 1 - POST = Iniciar sessión *
+app.post("/usuario/session", (req, res) => {
+  let Mail = req.body.Mail;
+  let Contrasenia = req.body.Contrasenia;
+
+  mc.query("SELECT * FROM usuario WHERE Mail= ?", Mail, function (err, results, fields) {
+    if (err) {
+      return res.status(500).json({
+        ok: false,
+        mensaje: "Error al buscar usuario",
+        errors: err,
+      });
+    }
+    if (!results.length) {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "Credenciales incorrectas",
+        errors: err,
+      });
+    }
+    //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if (Contrasenia == results[0].Contrasenia) {
+  let SEED = 'esta-es-una-semilla';
+ let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
+      return res.status(200).json({
+        ok: true,
+        mensaje: "usuario logueado correctamente",
+        data: results,
+        token:token
+      })
+    } else {
+      return res.status(400).json({
+        ok: false,
+        mensaje: "Credenciales incorrectas",
+        errors: err
+      })
+    }
+  }
+  );
+});
+
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad, 
+      CapturaFotografica, 
+      idSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos con éxito.');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
+
+//ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
+app.get('/datos/tempHumedad', function (req, res) {
+  //SELECT Temperatura, Humedad FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos sobre Temperatura y Humedad sin sala'
+    });
+  });
+});
+
+//ID = random - GET = listado de datos sobre CO2 y tvoc sin sala
+app.get('/datos/co2tvoc', function (req, res) {
+  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha,NivelesDeCO2, Tvoc FROM datos ORDER BY Fecha DESC LIMIT 7', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos sobre CO2 y tvoc sin sala'
+    });
+  });
+});
+
+app.get('/datos/inteisdadluminica', function (req, res) {
+  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
+  mc.query('SELECT Fecha, IntensidadLuminica FROM ( SELECT Fecha, IntensidadLuminica FROM datos ORDER BY Fecha DESC LIMIT 10) AS ultimos_10 ORDER BY Fecha ASC', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de datos intensidad luminica sin sala'
+    });
+  });
+});
+
+app.use('/', (req, res, next) => {
+  let token = req.query.token;
+  let SEED = "esta-es-una-semilla";
+  jwt.verify(token, SEED, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({
+        ok: false,
+        mensaje: "Token incorrecto",
+        errors: err,
+      });
+    }
+    req.usuario = decoded.usuario;
+    next();
+  });
+});
+
+//ID = 22 - POST = crear un reprote de desuso de aula 
+app.post('/reporte/crear/', function (req, res) {
+  let fecha = new Date();fecha
+  fecha.setHours(fecha.getHours() - 3)
+
+  let datosReporte = {
+    IdCurso: req.body.IdCurso,
+    FechaReporte: fecha,
+    IdCarrera: req.body.IdCarrera,
+    IdUsuario: req.body.IdUsuario,
+    IdAula: req.body.IdAula,
+    IdDatos: req.body.IdDatos,
+  };
+  if (mc) {
+    mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      }
+      else {
+        res.status(201).json({ "Mensaje": "Insertado" });
+      }
+    });
+  }
+});
+
+app.post("/EnviarCorreo/", (req, res) => {
   let datoscorreo = {
     to: req.body.to,
     NomDirector: req.body.NomDirector,
@@ -198,153 +393,17 @@ app.post("/EnviarCorreo", (req, res) => {
 
   smtpTransport.sendMail(mailOptions, (error, response) => {
     if (error) {
-      console.log(error);
       res.status(500).send("Error al enviar el correo.");
     } else {
-      console.log(response);
       res.send("Correo enviado correctamente.");
     }
     smtpTransport.close();
   });
 });
 
-//CORS middleware
-app.use(function (req, res, next) {
-  //Enabling CORS //["http://localhost:4200","https://cerulean-tarsier-37d919.netlify.app"]
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, x-client-key, x-client-token, x-client-secret, Authorization"
-  );
-  next();
-});
-
-const mc = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
-});
-mc.connect();
-
-
-/*
-const mc = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
-});
-mc.connect();
-
-
-const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
-});
-mc.connect();
-
-
-*/
-
-// sensores
-/////////////////////////////////////////////////////////////
-
-//ID = 1 - POST = Iniciar sessión *
-app.post("/usuario/session", (req, res) => {
-  let Mail = req.body.Mail;
-  let Contrasenia = req.body.Contrasenia;
-
-  mc.query("SELECT * FROM usuario WHERE Mail= ?", Mail, function (err, results, fields) {
-    if (err) {
-      return res.status(500).json({
-        ok: false,
-        mensaje: "Error al buscar usuario",
-        errors: err,
-      });
-    }
-
-    if (!results.length) {
-      return res.status(400).json({
-        ok: false,
-        mensaje: "Credenciales incorrectas",
-        errors: err,
-      });
-    }
-    //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
-    if (Contrasenia == results[0].Contrasenia) {
-
-      //let SEED = 'esta-es-una-semilla';
-      //let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 14400 });
-
-      return res.status(200).json({
-        ok: true,
-        mensaje: "usuario logueado correctamente",
-        data: results,
-      })
-    } else {
-      return res.status(400).json({
-        ok: false,
-        mensaje: "Credenciales incorrectas",
-        errors: err
-      })
-    }
-  }
-  );
-});
-
-
-/*
-app.use('/', (req, res, next) => {
-  let token = req.query.token;
-  let SEED = "esta-es-una-semilla";
-  console.log(token);
-  jwt.verify(token, SEED, (err, decoded) => {
-    if (err) {
-      return res.status(401).json({
-        ok: false,
-        mensaje: "Token incorrecto",
-        errors: err,
-      });
-    }
-    req.usuario = decoded.usuario;
-    next();
-  });
-});
-*/
-//ID = 22 - POST = crear un reprote de desuso de aula 
-app.post('/reporte/crear', function (req, res) {
-  let fecha = new Date();fecha
-  fecha.setHours(fecha.getHours() - 3)
-
-
-  let datosReporte = {
-    IdCurso: req.body.IdCurso,
-    FechaReporte: fecha,
-    IdCarrera: req.body.IdCarrera,
-    IdUsuario: req.body.IdUsuario,
-    IdAula: req.body.IdAula,
-    IdDatos: req.body.IdDatos,
-  };
-  console.log(datosReporte);
-  if (mc) {
-    mc.query("INSERT INTO reporte SET ?", datosReporte, function (error, results) {
-      if (error) {
-        res.status(500).json({ "Mensaje": "Error" });
-      }
-      else {
-        res.status(201).json({ "Mensaje": "Insertado" });
-      }
-    });
-  }
-});
-
 //ID = random - GET = Nombre de la Ciudad segun id *
-app.get('/sede/obtener/:IdCiudad', function (req, res) {
-  let IdCiudad = req.params.IdCiudad;
+app.get('/sede/obtener/', function (req, res) {
+  let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -361,7 +420,6 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 
 //   // Verificar si la ruta es un directorio
 //   if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
-//     console.log('La carpeta no existe');
 //     return res.send({
 //       error: true,
 //     });
@@ -371,14 +429,11 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 //   const archivos = fs.readdirSync(rutaAbsoluta);
 
 //   if (archivos.length === 0) {
-//     console.log('La carpeta está vacía');
 //     return res.send({
 //       error: true,
 //     });
 //   } else {
-//     console.log('Archivos en la carpeta:');
 //     archivos.forEach(archivo => {
-//       console.log(archivo);
 //       return res.send({
 //         error: false,
 //         message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivo
@@ -388,8 +443,8 @@ app.get('/sede/obtener/:IdCiudad', function (req, res) {
 // });
 
 //ID = random - GET = listado de sedes segun la ciudad *
-app.get('/sede/listado/:IdCiudad', function (req, res) {
-  let IdCiudad = req.params.IdCiudad;
+app.get('/sede/listado/', function (req, res) {
+  let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT sede.IdSede,sede.NomSede, sede.Acronimo, sede.Activa, sede.FechaActivacion FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -401,7 +456,7 @@ app.get('/sede/listado/:IdCiudad', function (req, res) {
 });
 
 //ID = random - GET = cambiar sede de encargado
-app.put('/usuario/cambiar/sede', function (req, res) {
+app.put('/usuario/cambiar/sede/', function (req, res) {
   let IdUsuario = req.body.IdUsuario;
   let IdSede = req.body.IdSede;
   mc.query('UPDATE usuario SET  IdSede = ? WHERE IdUsuario = ?', [IdSede,IdUsuario], function (error, results, fields) {
@@ -414,8 +469,8 @@ app.put('/usuario/cambiar/sede', function (req, res) {
 });
 
 //ID = random - GET = Datos de usuario segun segun id *
-app.get('/usuario/obtener/:IdUsuario', function (req, res) {
-  let IdUsuario = req.params.IdUsuario;
+app.get('/usuario/obtener/', function (req, res) {
+  let IdUsuario = req.query.IdUsuario;
   mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Fotografia, Mail, Contrasenia  FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -427,8 +482,8 @@ app.get('/usuario/obtener/:IdUsuario', function (req, res) {
 });
 
 //ID = random - GET = Datos de encargado de aula segun id *
-app.get('/encargado/obtener/:IdCiudad', function (req, res) {
-  let IdCiudad = req.params.IdCiudad;
+app.get('/encargado/obtener/', function (req, res) {
+  let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Fotografia,Mail,Contrasenia FROM usuario WHERE IdCiudad = ? AND IdRol = 2', IdCiudad, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -440,7 +495,7 @@ app.get('/encargado/obtener/:IdCiudad', function (req, res) {
 });
 
 //ID = random - PUT = Editar Usuario
-app.put('/usuario/editar', (req, res) => {
+app.put('/usuario/editar/', (req, res) => {
   const body = {
     IdUsuario: req.body.IdUsuario,
     NomUsuario:req.body.NomUsuario,
@@ -456,8 +511,8 @@ app.put('/usuario/editar', (req, res) => {
 });
 
 //ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede * ------------------cambio-----listo
-app.get('/area/listado/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
+app.get('/area/listado/', function (req, res) {
+  let IdSede = req.query.IdSede;
   mc.query('SELECT ar.IdArea,ar.NomArea FROM areatrabajo AS ar WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -469,8 +524,8 @@ app.get('/area/listado/:IdSede', function (req, res) {
 });
 
 //ID = random - GET = Obtner datos para correo
-app.get('/correo/Obtener/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
+app.get('/correo/Obtener/', function (req, res) {
+  let IdSede = req.query.IdSede;
   mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ?', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -481,7 +536,7 @@ app.get('/correo/Obtener/:IdSede', function (req, res) {
   });
 });
 
-//ID = 3 - GET = listado de todos los encargados de aulas segun la sede *
+//ID = 3 - GET = listado de todos los encargados de aulas segun la sede *   *nada
 app.get('/encargado/listado', function (req, res) {
   mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2', function (error, results, fields) {
     if (error) throw error;
@@ -494,8 +549,8 @@ app.get('/encargado/listado', function (req, res) {
 });
 
 //ID = 5 - GET = listado de todas las aulas de un área *
-app.get('/aula/listado/:IdArea', function (req, res) {
-  let IdArea = req.params.IdArea;
+app.get('/aula/listado/', function (req, res) {
+  let IdArea = req.query.IdAreasDeTrabajo;
   mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -507,8 +562,8 @@ app.get('/aula/listado/:IdArea', function (req, res) {
 });
 
 //ID = random - GET = listado de todas las aulas de un área *
-app.get('/aula/listado/sede/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
+app.get('/aula/listado/sede/', function (req, res) {
+  let IdSede = req.query.IdSede;
   mc.query('SELECT aula.IdAula, aula.NomAula FROM aula INNER JOIN areatrabajo ON aula.IdArea=areatrabajo.IdArea AND aula.Visible = 1 AND areatrabajo.IdSede= ?', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -520,7 +575,7 @@ app.get('/aula/listado/sede/:IdSede', function (req, res) {
 });
 
 //ID = 6 - POST = crear encargado de aula 
-app.post('/encargado/crear', function (req, res) {
+app.post('/encargado/crear/', function (req, res) {
   let datosEncargado = {
     NomUsuario: req.body.NomUsuario,
     ApeUsuario: req.body.ApeUsuario,
@@ -530,11 +585,9 @@ app.post('/encargado/crear', function (req, res) {
     IdCiudad : req.body.IdCiudad,
     Fotografia: req.body.Fotografia,
   };
-  console.log(datosEncargado);
   if (mc) {
     mc.query("INSERT INTO usuario SET ?", datosEncargado, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -562,8 +615,8 @@ app.post('/upload', express.raw({type: 'image/jpeg', limit: '10mb'}), (req, res)
 });
 
 //ID = 7 - PUT = editar datos de encargado de aula 
-app.put('/encargado/editar/:IdUsuario', (req, res) => {
-  let IdUsuario = req.params.IdUsuario;
+app.put('/encargado/editar/', (req, res) => {
+  let IdUsuario = req.body.IdUsuario;
   let datosEncargado = {
     NomUsuario: req.body.NomUsuario,
     ApeUsuario: req.body.ApeUsuario,
@@ -582,8 +635,8 @@ app.put('/encargado/editar/:IdUsuario', (req, res) => {
 });
 
 //ID = 8 - PUT = eliminar encargado de aula *
-app.put('/encargado/eliminar/:IdUsuario', (req, res) => {
-  let IdUsuario = req.params.IdUsuario;
+app.put('/encargado/eliminar/', (req, res) => {
+  let IdUsuario = req.body.IdUsuario;
 
   mc.query("UPDATE usuario SET IdRol=4 WHERE IdUsuario = ?", IdUsuario, function (error, results, fields) {
     if (error) throw error;
@@ -592,17 +645,15 @@ app.put('/encargado/eliminar/:IdUsuario', (req, res) => {
 });
 
 //ID = 9 - POST = crear area de trabajo *
-app.post('/area/crear', function (req, res) {
+app.post('/area/crear/', function (req, res) {
   let datosAreaDeTrabajo = {
     NomArea: req.body.NomArea,
     IdSede: req.body.IdSede,
     Visible: 1,
   };
-  console.log(datosAreaDeTrabajo);
   if (mc) {
     mc.query("INSERT INTO areatrabajo SET ?", datosAreaDeTrabajo, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -612,9 +663,9 @@ app.post('/area/crear', function (req, res) {
   }
 });
 
-//ID = 10 - PUT = editar area de trabajo  ---------------------cambio
-app.put('/area/editar/:IdArea', (req, res) => {
-  let IdArea = req.params.IdArea;
+//ID = 10 - PUT = editar area de trabajo                         
+app.put('/area/editar/', (req, res) => {
+  let IdArea = req.body.IdArea;
   let DatosArea = {
     NomArea: req.body.NomArea,
   };
@@ -628,8 +679,8 @@ app.put('/area/editar/:IdArea', (req, res) => {
 });
 
 //ID = 11 - PUT = "Elminar" área de trabajo *
-app.put('/area/eliminar/:IdArea', (req, res) => {
-  let IdArea = req.params.IdArea;
+app.put('/area/eliminar/', (req, res) => {
+  let IdArea = req.body.IdArea;
   let DatosArea = {
     Visible: 0,
   };
@@ -643,18 +694,16 @@ app.put('/area/eliminar/:IdArea', (req, res) => {
 });
 
 //ID = 14 - POST = Registar una nueva aula  *
-app.post('/aula/crear', function (req, res) {
+app.post('/aula/crear/', function (req, res) {
   let datosAula = {
     NomAula: req.body.NomAula,
     IdArea: req.body.IdArea,
     CantidadAlumnos: req.body.CantidadAlumnos,
     Visible: 1,
   };
-  console.log(datosAula);
   if (mc) {
     mc.query("INSERT INTO aula SET ?", datosAula, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -665,8 +714,8 @@ app.post('/aula/crear', function (req, res) {
 });
 
 //ID = 15 - PUT = editar aula *
-app.put('/aula/editar/:IdAula', (req, res) => {
-  let IdAula = req.params.IdAula;
+app.put('/aula/editar/', (req, res) => {
+  let IdAula = req.body.IdAula;
   let datosAula = {
     NomAula: req.body.NomAula,
     CantidadAlumnos: req.body.CantidadAlumnos
@@ -680,9 +729,9 @@ app.put('/aula/editar/:IdAula', (req, res) => {
   });
 });
 
-//ID = 16 - PUT = eliminar aula *
-app.put('/aula/eliminar/:IdAula', (req, res) => {
-  let IdAula = req.params.IdAula;
+//ID = 16 - PUT = eliminar aula           
+app.put('/aula/eliminar/', (req, res) => {
+  let IdAula = req.body.IdAula;
   let datosAula = {
     Visible: 0,
   };
@@ -702,11 +751,9 @@ app.post('/sensor/crear', function (req, res) {
     FechaMantenimiento: req.body.FechaInstalacion,
     IdAula: req.body.IdAula,
   };
-  console.log(datosSensor);
   if (mc) {
     mc.query("INSERT INTO sensor SET ?", datosSensor, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -716,7 +763,7 @@ app.post('/sensor/crear', function (req, res) {
   }
 });
 
-//ID = 18 - PUT = editar sensor 
+//ID = 18 - PUT = editar sensor   *nada
 app.put('/sensor/editar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
   let datosSensor = {
@@ -733,7 +780,7 @@ app.put('/sensor/editar/:IdSensor', function (req, res) {
   });
 });
 
-//ID = 19 - DELETE = eliminar sensor 
+//ID = 19 - DELETE = eliminar sensor                        *nada
 app.delete('/sensor/eliminar/:IdSensor', function (req, res) {
   let IdSede = req.params.IdSede;
   mc.query('DELETE FROM sensor WHERE IdSensor = ?', IdSede, function (error, results, fields) {
@@ -746,7 +793,7 @@ app.delete('/sensor/eliminar/:IdSensor', function (req, res) {
   });
 });
 
-//ID = 20 - GET = obtener datos ambientales de una determinada aula 
+//ID = 20 - GET = obtener datos ambientales de una determinada aula  *nada
 app.get('/aulas/detalle/:IdAula', function (req, res) {
   let IdAula = req.params.IdAula;
   mc.query('SELECT datos.IntensidadLuminica, datos.NivelesDeCO2, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor AND sensor.IdAula = ? LIMIT 10', IdAula, function (error, results, fields) {
@@ -759,9 +806,9 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
   });
 });
 
-//ID = random - GET = obtener todas las reservas de una aula                            -----*----
-app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
-  let IdAula = req.params.IdAula;
+//ID = random - GET = obtener todas las reservas de una aula                            
+app.get('/reserva/obtener/poraula/', function (req, res) {
+  let IdAula = req.query.IdAula;
   mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -772,24 +819,8 @@ app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
   });
 });
 
-/*
 
-app.get('/reserva/obtener/poraula/:IdAula', function (req, res) {
-  let IdAula = req.params.IdAula;
-  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor,contiene.IdBloque FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? JOIN contiene ON reserva.IdReserva = contiene.IdReserva WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'todas las reservas del aula con id ' + IdAula
-    });
-  });
-});
-
-*/
-
-
-//ID = random - GET = obtener todas los cursos de una carrera                          -----*
+//ID = random - GET = obtener todas los cursos de una carrera                         
 app.get('/cursos/obtener/:Idcarrea', function (req, res) {
   let Idcarrea = req.params.Idcarrea;
   mc.query('SELECT curso.IdCurso, curso.NomCurso FROM curso WHERE curso.IdCarrera = ?', Idcarrea, function (error, results, fields) {
@@ -802,9 +833,9 @@ app.get('/cursos/obtener/:Idcarrea', function (req, res) {
   });
 });
 
-//ID = random - GET = obtener todos los bloques de una reserva                         -----*
-app.get('/bloque/obtener/:Idreserva', function (req, res) {
-  let Idreserva = req.params.Idreserva;
+//ID = random - GET = obtener todos los bloques de una reserva                         
+app.get('/bloque/obtener/', function (req, res) {
+  let Idreserva = req.query.IdReserva;
   mc.query('SELECT IdBloque FROM contiene WHERE IdReserva = ?', Idreserva, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -816,8 +847,8 @@ app.get('/bloque/obtener/:Idreserva', function (req, res) {
 });
 
 
-//ID = 21 - GET = obtener alerta de desuso de aula          --------------------cambio
-app.post('/reporte/obtener', function (req, res) {
+//ID = 21 - GET = obtener alerta de desuso de aula       
+app.post('/reporte/obtener/', function (req, res) {
   let DiaClases = req.body.DiaClases;
   let IdSede = req.body.IdSede;
   mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera',[IdSede,DiaClases], function (error, results, fields) {
@@ -832,7 +863,7 @@ app.post('/reporte/obtener', function (req, res) {
 });
 
 //ID = random - PUT = Afirmar o negar alerta de desuso de aula 
-app.put('/alerta/validar', function (req, res) {
+app.put('/alerta/validar/', function (req, res) {
   let IdDatos = req.body.IdDatos;
   let validacion = req.body.validacion;
   mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?', [validacion, IdDatos], function (error, results, fields) {
@@ -858,7 +889,7 @@ app.get('/obtener/datos/coordinadora/:IdSede', function (req, res) {
   });
 });
 
-//ID = random - POST = crear una reseva                                               ----*
+//ID = random - POST = crear una reseva                                                *nada
 app.post('/reserva/crear', function (req, res) {
   let datosreserva = {
     DiaClases: req.body.DiaClases,
@@ -868,11 +899,9 @@ app.post('/reserva/crear', function (req, res) {
     IdAula: req.body.IdAula,
     IdSede: req.body.IdSede,
   };
-  console.log(datosreserva);
   if (mc) {
     mc.query("INSERT INTO reserva SET ?", datosreserva, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -882,17 +911,15 @@ app.post('/reserva/crear', function (req, res) {
   }
 });
 
-//ID = random - POST = crear una reseva con bloque                                     ----*
+//ID = random - POST = crear una reseva con bloque                                      *nada
 app.post('/reserva/crear/bloque', function (req, res) {
   let datosreserva = {
     IdReserva: req.body.IdReserva,
     IdBloque: req.body.IdBloque,
   };
-  console.log(datosreserva);
   if (mc) {
     mc.query("INSERT INTO contiene SET ?", datosreserva, function (error, results) {
       if (error) {
-        console.log(nofincona);
         res.status(500).json({ "Mensaje": "Error" });
       }
       else {
@@ -902,13 +929,12 @@ app.post('/reserva/crear/bloque', function (req, res) {
   }
 });
 
-//ID = 25 - GET = listado de todos los reportes segun la sede y la carrera 
+//ID = 25 - GET = listado de todos los reportes segun la sede y la carrera        *nada
 app.get('/reporte/listado/carrera', function (req, res) {
   let IdSede = req.body.IdSede;
   let IdCarrera = req.body.IdCarrera;
 
   mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.IdUsuario, usuario.NomUsuario, usuario.ApeUsuario, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera AND carrera.IdCarrera = ? INNER JOIN curso ON carrera.IdCarrera = curso.IdCarrera INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario ORDER BY rep.FechaReporte DESC', [IdSede, IdCarrera], function (error, results, fields) {
-    console.log(results);
     if (error) throw error;
     return res.send({
       error: false,
@@ -918,47 +944,9 @@ app.get('/reporte/listado/carrera', function (req, res) {
   });
 });
 
-//ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
-app.get('/datos/tempHumedad', function (req, res) {
-  //SELECT Temperatura, Humedad FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10', function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'listado de datos sobre Temperatura y Humedad sin sala'
-    });
-  });
-});
-
-//ID = random - GET = listado de datos sobre CO2 y tvoc sin sala
-app.get('/datos/co2tvoc', function (req, res) {
-  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha,NivelesDeCO2, Tvoc FROM datos ORDER BY Fecha DESC LIMIT 7', function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'listado de datos sobre CO2 y tvoc sin sala'
-    });
-  });
-});
-
-app.get('/datos/inteisdadluminica', function (req, res) {
-  //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha, IntensidadLuminica FROM ( SELECT Fecha, IntensidadLuminica FROM datos ORDER BY Fecha DESC LIMIT 10) AS ultimos_10 ORDER BY Fecha ASC', function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'listado de datos intensidad luminica sin sala'
-    });
-  });
-});
-
 //ID = 23 - GET = listado de todos los reportes segun la sede 
-app.get('/reporte/listado/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
+app.get('/reporte/listado/', function (req, res) {
+  let IdSede = req.query.IdSede;
   mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso ORDER BY rep.FechaReporte DESC', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -969,9 +957,9 @@ app.get('/reporte/listado/:IdSede', function (req, res) {
   });
 });
 
-//ID = 24 - GET = listado de todos las carreras segun la sede *                  ----*
-app.get('/carreras/listado/:IdSede', function (req, res) {
-  let IdSede = req.params.IdSede;
+//ID = 24 - GET = listado de todos las carreras segun la sede 
+app.get('/carreras/listado/', function (req, res) {
+  let IdSede = req.query.IdSede;
   mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -983,8 +971,8 @@ app.get('/carreras/listado/:IdSede', function (req, res) {
 });
 
 //ID = random - DELETE = eliminar reporte
-app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
-  let Idreporte = req.params.Idreporte;
+app.delete('/reporte/eliminar/', function (req, res) {
+  let Idreporte = req.query.Idreporte;
   mc.query('DELETE FROM reporte WHERE Idreporte = ?', Idreporte, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -995,7 +983,7 @@ app.delete('/reporte/eliminar/:Idreporte', function (req, res) {
   });
 });
 
-//ID = random - POST = verifica si el aula esta reservada ¿?
+//ID = random - POST = verifica si el aula esta reservada   *nada
 app.get('/aula/validacion/reserva', function (req, res) {
   let IdSensor = req.body.IdSensor;
   let IdBlocke = req.body.IdBlocke;
@@ -1010,7 +998,7 @@ app.get('/aula/validacion/reserva', function (req, res) {
   });
 });
 
-//ID = random - GET = obtener el estado de uso del aula
+//ID = random - GET = obtener el estado de uso del aula  *nada
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
   mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
@@ -1025,7 +1013,7 @@ app.get('/reserva/Obtener/:IdReserva', function (req, res) {
 
 
 //ID = random - PUT = Se ha activado el campus
-app.put('/campus/activar', function (req, res) {
+app.put('/campus/activar/', function (req, res) {
   let id = req.body.id;
   let fecha= null;
   mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?',[fecha, id], function (error, results, fields) {
@@ -1039,7 +1027,7 @@ app.put('/campus/activar', function (req, res) {
 });
 
 //ID = random - PUT = Se ha desactivado el campus
-app.put('/campus/desactivar', function (req, res) {
+app.put('/campus/desactivar/', function (req, res) {
   let id = req.body.id;
   let fecha = new Date();
   fecha.setHours(fecha.getHours() - 3)
@@ -1054,7 +1042,7 @@ app.put('/campus/desactivar', function (req, res) {
   });
 });
 
-//ID = random - PUT = editar estado de uso del aula
+//ID = random - PUT = editar estado de uso del aula         *nada
 app.put('/reserva/editar/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
   mc.query('UPDATE reserva SET reserva.EnUso = 0 WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
@@ -1068,8 +1056,8 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
 });
 
 //ID = random - GET = obtener el estado de uso del aula
-app.get('/campus/Obtener/Estado/:idCampus', function (req, res) {
-  let idCampus = req.params.idCampus;
+app.get('/campus/Obtener/Estado/', function (req, res) {
+  let idCampus = req.query.idCampus;
   mc.query('SELECT Activa FROM sede WHERE IdSede= ?', idCampus, function (error, results, fields) {
     if (error) throw error;
     return res.send({
@@ -1077,74 +1065,6 @@ app.get('/campus/Obtener/Estado/:idCampus', function (req, res) {
       data: results,
       message: 'Estado del campus con id '+idCampus
     });
-  });
-});
-
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
-
-//ID = random - GET = obtener el estado de uso del aula
-app.get('/reserva/Obtener/:IdReserva', function (req, res) {
-  let IdReserva = req.params.IdReserva;
-  mc.query('SELECT reserva.EnUso FROM reserva WHERE reserva.IdReserva = ?', IdReserva, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Estado de uso del aula'
-    });
-  });
-});
-
-app.post('/enviarcorreo', function (req, res) {
-  if (mc) {
-    //EL SMTPTRANSPORT ES EL QUE ENVIA EL CORREO, ESTA AQUI PA QUE NO SE ENVIE UN CORREO CADA VEZ QUE HACES UN CAMBIO EN EL BACK
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      error ? console.log(error) : console.log(response);
-      smtpTransport.close();
-    });
-  }
-});
-
-
-//Rutass
-app.get("/", (req, res, next) => {
-  res.status(200).json({
-    ok: true,
-    mensaje: "Peticion realizada correctamente",
   });
 });
 
