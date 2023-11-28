@@ -9,7 +9,7 @@ const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcrypt");
-const {storage} = require('./firebase');
+const { storage } = require('./firebase');
 const { v4: uuidv4 } = require('uuid');
 
 
@@ -39,19 +39,19 @@ const oauth2Client = new OAuth2(
   REDIRECT_URI
 );
 
- oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
- const accessToken = oauth2Client.getAccessToken();
- const smtpTransport = nodemailer.createTransport({
-   service: "gmail",
-   auth: {
-   type: "OAuth2",
-     user: "monitoreoaulas@gmail.com",
-     clientId: CLIENT_ID,
-     clientSecret: CLIENT_SECRET,
-     refreshToken: REFRESH_TOKEN,
-     accessToken: accessToken,
-   }
- });
+oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+const accessToken = oauth2Client.getAccessToken();
+const smtpTransport = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    type: "OAuth2",
+    user: "monitoreoaulas@gmail.com",
+    clientId: CLIENT_ID,
+    clientSecret: CLIENT_SECRET,
+    refreshToken: REFRESH_TOKEN,
+    accessToken: accessToken,
+  }
+});
 
 
 const horaEjecucion = '00:00:00';
@@ -59,7 +59,7 @@ const ahora = new Date();
 const horaDeseada = new Date(ahora.toDateString() + ' ' + horaEjecucion);
 let tiempoRestante = horaDeseada - ahora;
 if (tiempoRestante < 0) {
-  tiempoRestante += 24 * 60 * 60 * 1000; 
+  tiempoRestante += 24 * 60 * 60 * 1000;
 }
 
 setTimeout(realizarConsulta, tiempoRestante);
@@ -165,13 +165,13 @@ app.post("/usuario/session", (req, res) => {
     }
     //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
     if (Contrasenia == results[0].Contrasenia) {
-  let SEED = 'esta-es-una-semilla';
- let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
+      let SEED = 'esta-es-una-semilla';
+      let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
       return res.status(200).json({
         ok: true,
         mensaje: "usuario logueado correctamente",
         data: results,
-        token:token
+        token: token
       })
     } else {
       return res.status(400).json({
@@ -184,41 +184,6 @@ app.post("/usuario/session", (req, res) => {
   );
 });
 
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      idSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, 1)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos' });
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
 
 //ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
 app.get('/datos/tempHumedad', function (req, res) {
@@ -258,6 +223,119 @@ app.get('/datos/inteisdadluminica', function (req, res) {
   });
 });
 
+app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
+
+// app.post('/upload', async (req, res) => {
+//   // Generar un nombre único para el archivo
+
+//   const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
+
+//   const nombreArchivo = uuidv4() + '.jpg';
+
+//   try {
+//     // Crear un archivo en el bucket y escribir los datos de la imagen
+//     const file = bucket.file(nombreArchivo);
+//     const stream = file.createWriteStream({
+//       metadata: {
+//         contentType: 'image/jpeg'
+//       }
+//     });
+
+//     stream.on('error', (err) => {
+//       console.error('Error al subir el archivo:', err);
+//       res.status(500).send('Error al subir el archivo');
+//     });
+
+//     stream.on('finish', () => {
+//       // La imagen ha sido subida, enviar respuesta
+//       res.status(200).send('Archivo subido con éxito');
+//     });
+
+//     // Escribir los datos en el stream y cerrarlo
+//     stream.end(req.body);
+//   } catch (error) {
+//     console.error('Error en el catch:', error);
+//     res.status(500).send('Error al procesar la solicitud');
+//   }
+// });
+
+app.post('/upload', async (req, res) => {
+  const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
+  const nombreArchivo = uuidv4() + '.jpg';
+  
+  try {
+    const file = bucket.file(nombreArchivo);
+    const stream = file.createWriteStream({
+      metadata: {
+        contentType: 'image/jpeg'
+      }
+    });
+
+    stream.on('error', (err) => {
+      console.error('Error al subir el archivo:', err);
+      res.status(500).send('Error al subir el archivo');
+    });
+
+    
+
+    stream.on('finish', async () => {
+      // Hacer el archivo público
+      await file.makePublic();
+
+      // Obtener la URL pública
+      const url = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+
+      // Enviar la URL como respuesta
+      res.status(200).send({ message: 'Archivo subido con éxito', url: url });
+    });
+
+    stream.end(req.body);
+  } catch (error) {
+    console.error('Error en el catch:', error);
+    res.status(500).send('Error al procesar la solicitud');
+  }
+});
+
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+  const move = req.body.movimiento;
+  const foto = req.body.imageUrl;
+  const idSensor = req.body.idSensor;     // Obtener el ID del sensor desde el request body
+
+  // Inserta los datos en la tabla "datos"
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad,
+      Movimiento, 
+      CapturaFotografica, 
+      IdSensor
+    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [luminosity, co2Level, tvoc, temperature, humidity, move, foto, idSensor];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      console.error('Error al insertar datos en la base de datos: ' + err.message);
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      console.log('Datos insertados en la base de datos con éxito.');
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
+
 app.use('/', (req, res, next) => {
   let token = req.query.token;
   let SEED = "esta-es-una-semilla";
@@ -276,7 +354,7 @@ app.use('/', (req, res, next) => {
 
 //ID = 22 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear/', function (req, res) {
-  let fecha = new Date();fecha
+  let fecha = new Date(); fecha
   fecha.setHours(fecha.getHours() - 3)
 
   let datosReporte = {
@@ -305,13 +383,13 @@ app.post("/EnviarCorreo/", (req, res) => {
     NomDirector: req.body.NomDirector,
     ApeDirector: req.body.ApeDirector,
     NomSede: req.body.NomSede,
-    NomCurso:req.body.NomCurso, 
-    Codigo:req.body.Codigo, 
-    FechaReporte:req.body.FechaReporte, 
-    NomCarrera:req.body.NomCarrera, 
-    NomEncargado:req.body.NomEncargado,
-    NomAula:req.body.NomAula, 
-    CapturaFotografica:req.body.CapturaFotografica,  
+    NomCurso: req.body.NomCurso,
+    Codigo: req.body.Codigo,
+    FechaReporte: req.body.FechaReporte,
+    NomCarrera: req.body.NomCarrera,
+    NomEncargado: req.body.NomEncargado,
+    NomAula: req.body.NomAula,
+    CapturaFotografica: req.body.CapturaFotografica,
   };
 
   if (!datoscorreo.to) {
@@ -388,7 +466,7 @@ app.post("/EnviarCorreo/", (req, res) => {
   const mailOptions = {
     from: "Sistema de monitoreo de aulas UBB <monitoreoaulas@gmail.com>",
     to: datoscorreo.to,
-    subject: "Notificacion de desuso de aula "+datoscorreo.NomAula,
+    subject: "Notificacion de desuso de aula " + datoscorreo.NomAula,
     generateTextFromHTML: true,
     html: msg
   };
@@ -428,21 +506,7 @@ app.get('/sede/obtener/', function (req, res) {
 //   }
 
 //   // Leer el contenido de la carpeta
-//   const archivos = fs.readdirSync(rutaAbsoluta);
 
-//   if (archivos.length === 0) {
-//     return res.send({
-//       error: true,
-//     });
-//   } else {
-//     archivos.forEach(archivo => {
-//       return res.send({
-//         error: false,
-//         message: 'https://easy-pear-goose-fez.cyclic.cloud/img/'+archivo
-//       });
-//     });
-//   }
-// });
 
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/', function (req, res) {
@@ -461,7 +525,7 @@ app.get('/sede/listado/', function (req, res) {
 app.put('/usuario/cambiar/sede/', function (req, res) {
   let IdUsuario = req.body.IdUsuario;
   let IdSede = req.body.IdSede;
-  mc.query('UPDATE usuario SET  IdSede = ? WHERE IdUsuario = ?', [IdSede,IdUsuario], function (error, results, fields) {
+  mc.query('UPDATE usuario SET  IdSede = ? WHERE IdUsuario = ?', [IdSede, IdUsuario], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -500,13 +564,13 @@ app.get('/encargado/obtener/', function (req, res) {
 app.put('/usuario/editar/', (req, res) => {
   const body = {
     IdUsuario: req.body.IdUsuario,
-    NomUsuario:req.body.NomUsuario,
-    ApeUsuario:req.body.ApeUsuario,
-    Fotografia:req.body.Fotografia,
-    Mail:req.body.Mail,
-    Contrasenia:req.body.Contrasenia,
+    NomUsuario: req.body.NomUsuario,
+    ApeUsuario: req.body.ApeUsuario,
+    Fotografia: req.body.Fotografia,
+    Mail: req.body.Mail,
+    Contrasenia: req.body.Contrasenia,
   };
-  mc.query("UPDATE usuario SET NomUsuario=?,ApeUsuario=?,Fotografia=?,Mail=?,Contrasenia=? WHERE IdUsuario  = ?",[body.NomUsuario,body.ApeUsuario,body.Fotografia,body.Mail,body.Contrasenia,body.IdUsuario], function (error, results, fields) {
+  mc.query("UPDATE usuario SET NomUsuario=?,ApeUsuario=?,Fotografia=?,Mail=?,Contrasenia=? WHERE IdUsuario  = ?", [body.NomUsuario, body.ApeUsuario, body.Fotografia, body.Mail, body.Contrasenia, body.IdUsuario], function (error, results, fields) {
     if (error) throw error;
     return res.status(200).json({ "Mensaje": "Todas las área que tenian al encargado con id = " + body.IdUsuario + " ha quedado sin encargado" });
   });
@@ -584,7 +648,7 @@ app.post('/encargado/crear/', function (req, res) {
     Mail: req.body.Mail,
     Contrasenia: bcrypt.hashSync(req.body.Contrasenia, 10),
     IdRol: 2,
-    IdCiudad : req.body.IdCiudad,
+    IdCiudad: req.body.IdCiudad,
     Fotografia: req.body.Fotografia,
   };
   if (mc) {
@@ -599,71 +663,9 @@ app.post('/encargado/crear/', function (req, res) {
   }
 });
 
-// app.post('/upload', express.raw({type: 'image/jpeg', limit: '10mb'}), (req, res) => {
-
-//   var nombre = uuidv4();
-//   const filePath = path.join(__dirname, 'img', `${nombre}.jpg`);
-
-//   fs.writeFile(filePath, req.body, err => {
-//       if (err) {
-//           console.error(err);
-//           res.status(500).send('Error al guardar la imagen');
-//           return;
-//       }
-
-//       console.log('Archivo recibido y guardado:', filePath);
-//       res.status(200).send('Imagen recibida');
-//   });
-// });
 
 
-// app.post('/upload', express.raw({type: 'image/*', limit: '10mb'}), async (req, res) => {
-//   const bucket = storage.bucket('gs://imagenes-7796b.appspot.com');
-//   var nombre = uuidv4();
-//   try {
-//       await bucket.upload(`${nombre}.jpg`);
-//       res.status(200).send('Archivo subido con éxito');
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).send('Error al subir el archivo');
-//   }
-// });
 
-app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
-
-app.post('/upload', async (req, res) => {
-  // Generar un nombre único para el archivo
-
-  const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
-
-  const nombreArchivo = uuidv4() + '.jpg';
-
-  try {
-    // Crear un archivo en el bucket y escribir los datos de la imagen
-    const file = bucket.file(nombreArchivo);
-    const stream = file.createWriteStream({
-      metadata: {
-        contentType: 'image/jpeg'
-      }
-    });
-
-    stream.on('error', (err) => {
-      console.error('Error al subir el archivo:', err);
-      res.status(500).send('Error al subir el archivo');
-    });
-
-    stream.on('finish', () => {
-      // La imagen ha sido subida, enviar respuesta
-      res.status(200).send('Archivo subido con éxito');
-    });
-
-    // Escribir los datos en el stream y cerrarlo
-    stream.end(req.body);
-  } catch (error) {
-    console.error('Error en el catch:', error);
-    res.status(500).send('Error al procesar la solicitud');
-  }
-});
 
 //ID = 7 - PUT = editar datos de encargado de aula 
 app.put('/encargado/editar/', (req, res) => {
@@ -901,7 +903,7 @@ app.get('/bloque/obtener/', function (req, res) {
 app.post('/reporte/obtener/', function (req, res) {
   let DiaClases = req.body.DiaClases;
   let IdSede = req.body.IdSede;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera',[IdSede,DiaClases], function (error, results, fields) {
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera', [IdSede, DiaClases], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -1065,13 +1067,13 @@ app.get('/reserva/Obtener/:IdReserva', function (req, res) {
 //ID = random - PUT = Se ha activado el campus
 app.put('/campus/activar/', function (req, res) {
   let id = req.body.id;
-  let fecha= null;
-  mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?',[fecha, id], function (error, results, fields) {
+  let fecha = null;
+  mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
-      message: 'Se ha activado el campus con id '+id
+      message: 'Se ha activado el campus con id ' + id
     });
   });
 });
@@ -1082,12 +1084,12 @@ app.put('/campus/desactivar/', function (req, res) {
   let fecha = new Date();
   fecha.setHours(fecha.getHours() - 3)
 
-  mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha,id], function (error, results, fields) {
+  mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
-      message: 'Se ha desactivado el campus con id '+id
+      message: 'Se ha desactivado el campus con id ' + id
     });
   });
 });
@@ -1113,47 +1115,12 @@ app.get('/campus/Obtener/Estado/', function (req, res) {
     return res.send({
       error: false,
       data: results,
-      message: 'Estado del campus con id '+idCampus
+      message: 'Estado del campus con id ' + idCampus
     });
   });
 });
 
-app.post('/enviar-datos', (req, res) => {
-  const temperature = req.body.temperature;
-  const humidity = req.body.humidity;
-  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
-  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
-  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
-  const idSensor = req.body.idSensor;     // Obtener el ID del sensor desde el request body
 
-  // Inserta los datos en la tabla "datos"
-  const insertQuery = `
-    INSERT INTO datos (
-      Fecha, 
-      Reportado, 
-      Correcto, 
-      IntensidadLuminica, 
-      NivelesDeCO2, 
-      Tvoc, 
-      Temperatura, 
-      Humedad, 
-      CapturaFotografica, 
-      IdSensor
-    ) VALUES (NOW(), 0, 0, ?, ?, ?, ?, ?, NULL, ?)`;
-
-  // Valores para la inserción en la base de datos
-  const values = [luminosity, co2Level, tvoc, temperature, humidity, idSensor];
-
-  mc.query(insertQuery, values, (err, result) => {
-    if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
-      res.status(500).json({ error: 'Error al insertar datos'});
-    } else {
-      console.log('Datos insertados en la base de datos con éxito.');
-      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
-    }
-  });
-});
 
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
@@ -1177,7 +1144,6 @@ app.post('/enviarcorreo', function (req, res) {
     });
   }
 });
-
 
 //Rutass
 app.get("/", (req, res, next) => {
