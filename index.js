@@ -809,7 +809,7 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
 //ID = random - GET = obtener todas las reservas de una aula                            
 app.get('/reserva/obtener/poraula/', function (req, res) {
   let IdAula = req.query.IdAula;
-  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
+  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor, curso.Codigo FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -818,7 +818,6 @@ app.get('/reserva/obtener/poraula/', function (req, res) {
     });
   });
 });
-
 
 //ID = random - GET = obtener todas los cursos de una carrera                         
 app.get('/cursos/obtener/:Idcarrea', function (req, res) {
