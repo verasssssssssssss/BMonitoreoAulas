@@ -111,10 +111,10 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "psensores",
+  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
+  user: "ux6lflejgxqlkbbd",
+  password: "kvkOMAr6FXTdstO8vhk6",
+  database: "bjx67tth5lqo4fhqtdjt",
 });
 mc.connect();
 
@@ -186,22 +186,23 @@ app.post("/usuario/session", (req, res) => {
 
 
 //ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
-app.get('/datos/tempHumedad', function (req, res) {
-  //SELECT Temperatura, Humedad FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha,Temperatura, Humedad FROM datos ORDER BY Fecha DESC LIMIT 10', function (error, results, fields) {
+app.get('/datos/tempHumedad/:idAula', function (req, res) {
+  let idAula = req.params.idAula;
+  mc.query('SELECT datos.Fecha, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
-      message: 'listado de datos sobre Temperatura y Humedad sin sala'
+      message: 'listado de datos sobre Temperatura y Humedad de una determinada aula'
     });
   });
 });
 
 //ID = random - GET = listado de datos sobre CO2 y tvoc sin sala
-app.get('/datos/co2tvoc', function (req, res) {
+app.get('/datos/co2tvoc/:idAula', function (req, res) {
+  let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha,NivelesDeCO2, Tvoc FROM datos ORDER BY Fecha DESC LIMIT 7', function (error, results, fields) {
+  mc.query('SELECT datos.Fecha, datos.NivelesDeCO2, datos.Tvoc FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 7',idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -211,9 +212,10 @@ app.get('/datos/co2tvoc', function (req, res) {
   });
 });
 
-app.get('/datos/inteisdadluminica', function (req, res) {
+app.get('/datos/inteisdadluminica/:idAula', function (req, res) {
+  let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT Fecha, IntensidadLuminica FROM ( SELECT Fecha, IntensidadLuminica FROM datos ORDER BY Fecha DESC LIMIT 10) AS ultimos_10 ORDER BY Fecha ASC', function (error, results, fields) {
+  mc.query('SELECT datos.Fecha, datos.IntensidadLuminica FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -354,7 +356,7 @@ app.use('/', (req, res, next) => {
 
 //ID = 22 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear/', function (req, res) {
-  let fecha = new Date(); fecha
+  let fecha = new Date();
   fecha.setHours(fecha.getHours() - 3)
 
   let datosReporte = {
@@ -903,7 +905,7 @@ app.get('/bloque/obtener/', function (req, res) {
 app.post('/reporte/obtener/', function (req, res) {
   let DiaClases = req.body.DiaClases;
   let IdSede = req.body.IdSede;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera', [IdSede, DiaClases], function (error, results, fields) {
+  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.IdCarrera ,carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera', [IdSede, DiaClases], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -1109,13 +1111,13 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
 
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/campus/Obtener/Estado/', function (req, res) {
-  let idCampus = req.query.idCampus;
-  mc.query('SELECT Activa FROM sede WHERE IdSede= ?', idCampus, function (error, results, fields) {
+  let IdCampus = req.query.IdCampus;
+  mc.query('SELECT Activa FROM sede WHERE IdSede = ?', IdCampus, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       data: results,
-      message: 'Estado del campus con id ' + idCampus
+      message: 'Estado del campus'
     });
   });
 });
