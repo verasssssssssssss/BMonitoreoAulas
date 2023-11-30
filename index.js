@@ -27,6 +27,7 @@ const { v4: uuidv4 } = require('uuid');
 
 
 
+/*
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
@@ -53,6 +54,7 @@ const smtpTransport = nodemailer.createTransport({
   }
 });
 
+*/
 
 const horaEjecucion = '00:00:00';
 const ahora = new Date();
@@ -117,6 +119,7 @@ const mc = mysql.createConnection({
   database: "bjx67tth5lqo4fhqtdjt",
 });
 mc.connect();
+
 
 
 /*
@@ -594,7 +597,7 @@ app.get('/area/listado/', function (req, res) {
 //ID = random - GET = Obtner datos para correo
 app.get('/correo/Obtener/', function (req, res) {
   let IdSede = req.query.IdSede;
-  mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ?', IdSede, function (error, results, fields) {
+  mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ? AND usuario.IdRol=1', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -903,15 +906,30 @@ app.get('/bloque/obtener/', function (req, res) {
 
 //ID = 21 - GET = obtener alerta de desuso de aula       
 app.post('/reporte/obtener/', function (req, res) {
-  let DiaClases = req.body.DiaClases;
   let IdSede = req.body.IdSede;
-  mc.query('SELECT areatrabajo.IdArea ,aula.IdAula,areatrabajo.NomArea,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, carrera.IdCarrera ,carrera.NomCarrera, curso.IdCurso,curso.NomProfesor, curso.NomCurso, curso.Codigo FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 INNER JOIN reserva ON aula.IdAula = reserva.IdAula AND reserva.DiaClases = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera', [IdSede, DiaClases], function (error, results, fields) {
+  mc.query('SELECT aula.IdAula,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, datos.Fecha FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 ', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
       dataLenghy: results.length,
       data: results,
       message: 'Obtener alerta de desuso de aula'
+    });
+  });
+});
+
+//ID = 21 - GET = obtener datos del aula en desuso       
+app.get('/reporte/obtener/datos/', function (req, res) {
+  let Dia = req.query.Dia;
+  let IdAula = req.query.IdAula;
+  let IdBloque = req.query.IdBloque;
+  mc.query('SELECT curso.IdCurso, curso.NomCurso,curso.Codigo,carrera.IdCarrera, carrera.NomCarrera FROM  contiene  INNER JOIN reserva on contiene.IdReserva = reserva.IdReserva AND reserva.DiaClases = ? AND reserva.IdAula = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE contiene.IdBloque=?', [Dia,IdAula,IdBloque], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      dataLenghy: results.length,
+      data: results,
+      message: 'obtener datos del aula en desuso'
     });
   });
 });
