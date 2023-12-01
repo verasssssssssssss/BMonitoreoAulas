@@ -3,8 +3,6 @@ const app = express();
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const cors = require("cors");
-const fs = require('fs');
-const path = require('path');
 const mysql = require("mysql");
 const bodyParser = require("body-parser");
 var jwt = require("jsonwebtoken");
@@ -77,23 +75,6 @@ function realizarConsulta() {
   });
 }
 
-function verificarArchivosEnCarpeta(rutaCarpeta) {
-  const rutaAbsoluta = path.join(__dirname, rutaCarpeta);
-
-  // Verificar si la ruta es un directorio
-  if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
-    return;
-  }
-
-  // Leer el contenido de la carpeta
-  const archivos = fs.readdirSync(rutaAbsoluta);
-
-  if (archivos.length === 0) {
-  } else {
-    archivos.forEach(archivo => {
-    });
-  }
-}
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
@@ -113,14 +94,12 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 mc.connect();
-
-
 
 /*
 const mc = mysql.createConnection({
@@ -167,7 +146,7 @@ app.post("/usuario/session", (req, res) => {
       });
     }
     //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
-    if (Contrasenia == results[0].Contrasenia) {
+      if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
       let SEED = 'esta-es-una-semilla';
       let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
       return res.status(200).json({
@@ -229,40 +208,6 @@ app.get('/datos/inteisdadluminica/:idAula', function (req, res) {
 });
 
 app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
-
-// app.post('/upload', async (req, res) => {
-//   // Generar un nombre único para el archivo
-
-//   const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
-
-//   const nombreArchivo = uuidv4() + '.jpg';
-
-//   try {
-//     // Crear un archivo en el bucket y escribir los datos de la imagen
-//     const file = bucket.file(nombreArchivo);
-//     const stream = file.createWriteStream({
-//       metadata: {
-//         contentType: 'image/jpeg'
-//       }
-//     });
-
-//     stream.on('error', (err) => {
-//       console.error('Error al subir el archivo:', err);
-//       res.status(500).send('Error al subir el archivo');
-//     });
-
-//     stream.on('finish', () => {
-//       // La imagen ha sido subida, enviar respuesta
-//       res.status(200).send('Archivo subido con éxito');
-//     });
-
-//     // Escribir los datos en el stream y cerrarlo
-//     stream.end(req.body);
-//   } catch (error) {
-//     console.error('Error en el catch:', error);
-//     res.status(500).send('Error al procesar la solicitud');
-//   }
-// });
 
 app.post('/upload', async (req, res) => {
   const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
@@ -667,6 +612,7 @@ app.post('/encargado/crear/', function (req, res) {
     });
   }
 });
+
 
 
 
