@@ -100,7 +100,6 @@ mc.connect();
 app.post("/usuario/session", (req, res) => {
   let Mail = req.body.Mail;
   let Contrasenia = req.body.Contrasenia;
-
   mc.query("SELECT * FROM usuario WHERE Mail= ?", Mail, function (err, results, fields) {
     if (err) {
       return res.status(500).json({
@@ -136,8 +135,8 @@ app.post("/usuario/session", (req, res) => {
   );
 });
 
-//ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
-app.get('/datos/tempHumedad/:idAula', function (req, res) {
+//ID = 2- GET = listado de datos sobre Temperatura y Humedad de una determinada aula
+app.get('/datos/tempHum/:idAula', function (req, res) {
   let idAula = req.params.idAula;
   mc.query('SELECT datos.Fecha, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
     if (error) throw error;
@@ -149,7 +148,7 @@ app.get('/datos/tempHumedad/:idAula', function (req, res) {
   });
 });
 
-//ID = random - GET = listado de datos sobre CO2 y tvoc sin sala
+//ID = 3 - GET = listado de datos sobre CO2 y tvoc de una determinada aula
 app.get('/datos/co2tvoc/:idAula', function (req, res) {
   let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
@@ -163,7 +162,8 @@ app.get('/datos/co2tvoc/:idAula', function (req, res) {
   });
 });
 
-app.get('/datos/inteisdadluminica/:idAula', function (req, res) {
+//ID = 4 - GET = listado de dato de IntensidadLuminica determinada aula
+app.get('/datos/Iluminica/:idAula', function (req, res) {
   let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
   mc.query('SELECT datos.Fecha, datos.IntensidadLuminica FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
@@ -176,6 +176,7 @@ app.get('/datos/inteisdadluminica/:idAula', function (req, res) {
   });
 });
 
+//ID = 5 - POST = subir captura fotografica de sensor
 app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
 
 app.post('/upload', async (req, res) => {
@@ -213,6 +214,7 @@ app.post('/upload', async (req, res) => {
   }
 });
 
+//ID = 6 - POST = recopliar datos de los sensores
 app.post('/enviar-datos', (req, res) => {
   const temperature = req.body.temperature;
   const humidity = req.body.humidity;
@@ -269,7 +271,7 @@ app.use('/', (req, res, next) => {
   });
 });
 
-//ID = 22 - POST = crear un reprote de desuso de aula 
+//ID = 7 - POST = crear un reprote de desuso de aula 
 app.post('/reporte/crear/', function (req, res) {
   let fecha = new Date();
   fecha.setHours(fecha.getHours() - 3)
@@ -294,6 +296,7 @@ app.post('/reporte/crear/', function (req, res) {
   }
 });
 
+//ID = 8 - POST = enviar correo de desuso de aula
 app.post("/EnviarCorreo/", (req, res) => {
   let datoscorreo = {
     to: req.body.to,
@@ -398,7 +401,7 @@ app.post("/EnviarCorreo/", (req, res) => {
   });
 });
 
-//ID = random - GET = Nombre de la Ciudad segun id *
+//ID = 9 - GET = Nombre de la Ciudad segun id *
 app.get('/sede/obtener/', function (req, res) {
   let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT ciudad.NomCiudad FROM ciudad WHERE ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
@@ -411,8 +414,8 @@ app.get('/sede/obtener/', function (req, res) {
   });
 });
 
-//ID = random - GET = listado de sedes segun la ciudad *
-app.get('/sede/listado/', function (req, res) {
+//ID = 10 - GET = listado de sedes segun la ciudad *
+app.get('/campus/listado/', function (req, res) {
   let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT sede.IdSede,sede.NomSede, sede.Acronimo, sede.Activa, sede.FechaActivacion FROM sede INNER JOIN ciudad ON ciudad.IdCiudad = sede.IdCiudad AND ciudad.IdCiudad = ?', IdCiudad, function (error, results, fields) {
     if (error) throw error;
@@ -424,8 +427,8 @@ app.get('/sede/listado/', function (req, res) {
   });
 });
 
-//ID = random - GET = cambiar sede de encargado
-app.put('/usuario/cambiar/sede/', function (req, res) {
+//ID = 11 - PUT = cambiar sede de encargado
+app.put('/cambiarde/sede/', function (req, res) {
   let IdUsuario = req.body.IdUsuario;
   let IdSede = req.body.IdSede;
   mc.query('UPDATE usuario SET  IdSede = ? WHERE IdUsuario = ?', [IdSede, IdUsuario], function (error, results, fields) {
@@ -437,7 +440,7 @@ app.put('/usuario/cambiar/sede/', function (req, res) {
   });
 });
 
-//ID = random - GET = Datos de usuario segun segun id *
+//ID = 12 - GET = Datos de usuario segun segun id *
 app.get('/usuario/obtener/', function (req, res) {
   let IdUsuario = req.query.IdUsuario;
   mc.query('SELECT IdUsuario,NomUsuario, ApeUsuario, Fotografia, Mail, Contrasenia  FROM usuario WHERE IdUsuario = ?', IdUsuario, function (error, results, fields) {
@@ -450,7 +453,7 @@ app.get('/usuario/obtener/', function (req, res) {
   });
 });
 
-//ID = random - GET = Datos de encargado de aula segun id *
+//ID = 13 - GET = Datos de encargado de aula segun id *
 app.get('/encargado/obtener/', function (req, res) {
   let IdCiudad = req.query.IdCiudad;
   mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Fotografia,Mail,Contrasenia FROM usuario WHERE IdCiudad = ? AND IdRol = 2', IdCiudad, function (error, results, fields) {
@@ -463,7 +466,7 @@ app.get('/encargado/obtener/', function (req, res) {
   });
 });
 
-//ID = random - PUT = Editar Usuario
+//ID = 14 - PUT = Editar Usuario
 app.put('/usuario/editar/', (req, res) => {
   const body = {
     IdUsuario: req.body.IdUsuario,
@@ -479,7 +482,7 @@ app.put('/usuario/editar/', (req, res) => {
   });
 });
 
-//ID = 2 y 4 - GET = listado de areas de trabajo segunn la sede * ------------------cambio-----listo
+//ID = 15 - GET = listado de areas de trabajo segunn la sede * ------------------cambio-----listo
 app.get('/area/listado/', function (req, res) {
   let IdSede = req.query.IdSede;
   mc.query('SELECT ar.IdArea,ar.NomArea FROM areatrabajo AS ar WHERE ar.IdSede = ? AND ar.Visible = 1', IdSede, function (error, results, fields) {
@@ -492,32 +495,7 @@ app.get('/area/listado/', function (req, res) {
   });
 });
 
-//ID = random - GET = Obtner datos para correo
-app.get('/correo/Obtener/', function (req, res) {
-  let IdSede = req.query.IdSede;
-  mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ? AND usuario.IdRol=1', IdSede, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Listado de sedes segun la ciudad'
-    });
-  });
-});
-
-//ID = 3 - GET = listado de todos los encargados de aulas segun la sede *   *nada
-app.get('/encargado/listado', function (req, res) {
-  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2', function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'listado de todos los encargados de aulas de la sede'
-    });
-  });
-});
-
-//ID = 5 - GET = listado de todas las aulas de un área *
+//ID = 16 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/', function (req, res) {
   let IdArea = req.query.IdAreasDeTrabajo;
   mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
@@ -529,8 +507,8 @@ app.get('/aula/listado/', function (req, res) {
     });
   });
 });
-
-//ID = random - GET = listado de todas las aulas de un área *
+               
+//ID = 17 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/sede/', function (req, res) {
   let IdSede = req.query.IdSede;
   mc.query('SELECT aula.IdAula, aula.NomAula FROM aula INNER JOIN areatrabajo ON aula.IdArea=areatrabajo.IdArea AND aula.Visible = 1 AND areatrabajo.IdSede= ?', IdSede, function (error, results, fields) {
@@ -543,7 +521,19 @@ app.get('/aula/listado/sede/', function (req, res) {
   });
 });
 
-//ID = 6 - POST = crear encargado de aula 
+//ID = 18 - GET = Obtner datos para correo
+app.get('/correo/Obtener/', function (req, res) {
+  let IdSede = req.query.IdSede;
+  mc.query('SELECT sede.NomSede, usuario.NomUsuario, usuario.ApeUsuario, usuario.Mail FROM ciudad INNER JOIN sede ON ciudad.IdCiudad = sede.IdCiudad INNER JOIN usuario ON usuario.IdCiudad = ciudad.IdCiudad WHERE sede.IdSede = ? AND usuario.IdRol=1', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Listado de sedes segun la ciudad'
+    });
+  });
+});
+//ID = 19 - POST = crear encargado de aula 
 app.post('/encargado/crear/', function (req, res) {
   let datosEncargado = {
     NomUsuario: req.body.NomUsuario,
@@ -566,7 +556,7 @@ app.post('/encargado/crear/', function (req, res) {
   }
 });
 
-//ID = 7 - PUT = editar datos de encargado de aula 
+//ID = 20 - PUT = editar datos de encargado de aula 
 app.put('/encargado/editar/', (req, res) => {
   let IdUsuario = req.body.IdUsuario;
   let datosEncargado = {
@@ -586,7 +576,7 @@ app.put('/encargado/editar/', (req, res) => {
   });
 });
 
-//ID = 8 - PUT = eliminar encargado de aula *
+//ID = 21 - PUT = eliminar encargado de aula *
 app.put('/encargado/eliminar/', (req, res) => {
   let IdUsuario = req.body.IdUsuario;
 
@@ -596,7 +586,7 @@ app.put('/encargado/eliminar/', (req, res) => {
   });
 });
 
-//ID = 9 - POST = crear area de trabajo *
+//ID = 22 - POST = crear area de trabajo *
 app.post('/area/crear/', function (req, res) {
   let datosAreaDeTrabajo = {
     NomArea: req.body.NomArea,
@@ -615,7 +605,7 @@ app.post('/area/crear/', function (req, res) {
   }
 });
 
-//ID = 10 - PUT = editar area de trabajo                         
+//ID = 23 - PUT = editar area de trabajo                         
 app.put('/area/editar/', (req, res) => {
   let IdArea = req.body.IdArea;
   let DatosArea = {
@@ -630,7 +620,7 @@ app.put('/area/editar/', (req, res) => {
   });
 });
 
-//ID = 11 - PUT = "Elminar" área de trabajo *
+//ID = 24 - PUT = "Elminar" área de trabajo *
 app.put('/area/eliminar/', (req, res) => {
   let IdArea = req.body.IdArea;
   let DatosArea = {
@@ -645,7 +635,7 @@ app.put('/area/eliminar/', (req, res) => {
   });
 });
 
-//ID = 14 - POST = Registar una nueva aula  *
+//ID = 25 - POST = Registar una nueva aula  *
 app.post('/aula/crear/', function (req, res) {
   let datosAula = {
     NomAula: req.body.NomAula,
@@ -665,7 +655,7 @@ app.post('/aula/crear/', function (req, res) {
   }
 });
 
-//ID = 15 - PUT = editar aula *
+//ID = 26 - PUT = editar aula *
 app.put('/aula/editar/', (req, res) => {
   let IdAula = req.body.IdAula;
   let datosAula = {
@@ -681,7 +671,7 @@ app.put('/aula/editar/', (req, res) => {
   });
 });
 
-//ID = 16 - PUT = eliminar aula           
+//ID = 27 - PUT = eliminar aula           
 app.put('/aula/eliminar/', (req, res) => {
   let IdAula = req.body.IdAula;
   let datosAula = {
@@ -696,8 +686,176 @@ app.put('/aula/eliminar/', (req, res) => {
   });
 });
 
-//ID = 17 - POST = Registar un nuevo sensor 
-app.post('/sensor/crear', function (req, res) {
+//ID = random - 28 = obtener todas las reservas de una aula                            
+app.get('/reserva/poraula/', function (req, res) {
+  let IdAula = req.query.IdAula;
+  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor, curso.Codigo FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas las reservas del aula con id ' + IdAula
+    });
+  });
+});
+
+//ID = 29 - GET = obtener todos los bloques de una reserva                         
+app.get('/bloque/obtener/', function (req, res) {
+  let Idreserva = req.query.IdReserva;
+  mc.query('SELECT IdBloque FROM contiene WHERE IdReserva = ?', Idreserva, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'todas los bloques pedagogico de una reserva con id ' + Idreserva
+    });
+  });
+});
+
+//ID = 30 - GET = obtener alerta de desuso de aula       
+app.post('/alerta/obtener/', function (req, res) {
+  let IdSede = req.body.IdSede;
+  mc.query('SELECT aula.IdAula,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, datos.Fecha FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 ', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      dataLenghy: results.length,
+      data: results,
+      message: 'Obtener alerta de desuso de aula'
+    });
+  });
+});
+
+//ID = 31 - GET = obtener datos del aula en desuso       
+app.get('/reporte/datos/', function (req, res) {
+  let Dia = req.query.Dia;
+  let IdAula = req.query.IdAula;
+  let IdBloque = req.query.IdBloque;
+  mc.query('SELECT curso.IdCurso, curso.NomCurso,curso.Codigo,carrera.IdCarrera, carrera.NomCarrera FROM  contiene  INNER JOIN reserva on contiene.IdReserva = reserva.IdReserva AND reserva.DiaClases = ? AND reserva.IdAula = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE contiene.IdBloque=?', [Dia,IdAula,IdBloque], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      dataLenghy: results.length,
+      data: results,
+      message: 'obtener datos del aula en desuso'
+    });
+  });
+});
+
+//ID = 32 - PUT = Afirmar o negar alerta de desuso de aula 
+app.put('/alerta/validar/', function (req, res) {
+  let IdDatos = req.body.IdDatos;
+  let validacion = req.body.validacion;
+  mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?', [validacion, IdDatos], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se valido la alera de desuso de aula correctamente'
+    });
+  });
+});
+
+//ID = 33 - GET = listado de todos los reportes segun la sede 
+app.get('/reporte/listado/', function (req, res) {
+  let IdSede = req.query.IdSede;
+  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso ORDER BY rep.FechaReporte DESC', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Listado de todos los reportes segun la sede'
+    });
+  });
+});
+
+//ID = 34 - GET = listado de todos las carreras segun la sede 
+app.get('/carreras/listado/', function (req, res) {
+  let IdSede = req.query.IdSede;
+  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todos las carreras segun la sede'
+    });
+  });
+});
+
+//ID = 35 - DELETE = eliminar reporte
+app.delete('/reporte/eliminar/', function (req, res) {
+  let Idreporte = req.query.Idreporte;
+  mc.query('DELETE FROM reporte WHERE Idreporte = ?', Idreporte, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Reporte eliminado correctamente'
+    });
+  });
+});
+
+//ID = 36 - PUT = Se ha activado el campus
+app.put('/campus/activar/', function (req, res) {
+  let id = req.body.id;
+  let fecha = null;
+  mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se ha activado el campus con id ' + id
+    });
+  });
+});
+
+//ID = 37 - PUT = Se ha desactivado el campus
+app.put('/campus/desactivar/', function (req, res) {
+  let id = req.body.id;
+  let fecha = new Date();
+  fecha.setHours(fecha.getHours() - 3)
+
+  mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Se ha desactivado el campus con id ' + id
+    });
+  });
+});
+
+//ID = 38 - GET = obtener el estado de uso del aula
+app.get('/campus/estado/', function (req, res) {
+  let IdCampus = req.query.IdCampus;
+  mc.query('SELECT Activa FROM sede WHERE IdSede = ?', IdCampus, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Estado del campus'
+    });
+  });
+});
+
+////////////////////////////
+//Sin Usar
+////////////////////////////
+
+//ID = random - GET = listado de todos los encargados
+app.get('/encargado/listado', function (req, res) {
+  mc.query('SELECT IdUsuario,NomUsuario,ApeUsuario,Mail FROM usuario WHERE IdRol = 2', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todos los encargados de aulas de la sede'
+    });
+  });
+});
+
+ //ID = 28 - POST = Registar un nuevo sensor 
+ app.post('/sensor/crear', function (req, res) {
   let datosSensor = {
     FechaInstalacion: req.body.FechaInstalacion,
     FechaMantenimiento: req.body.FechaInstalacion,
@@ -758,19 +916,6 @@ app.get('/aulas/detalle/:IdAula', function (req, res) {
   });
 });
 
-//ID = random - GET = obtener todas las reservas de una aula                            
-app.get('/reserva/obtener/poraula/', function (req, res) {
-  let IdAula = req.query.IdAula;
-  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor, curso.Codigo FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'todas las reservas del aula con id ' + IdAula
-    });
-  });
-});
-
 //ID = random - GET = obtener todas los cursos de una carrera                         
 app.get('/cursos/obtener/:Idcarrea', function (req, res) {
   let Idcarrea = req.params.Idcarrea;
@@ -780,64 +925,6 @@ app.get('/cursos/obtener/:Idcarrea', function (req, res) {
       error: false,
       data: results,
       message: 'todas los cursos de la carrera con id ' + Idcarrea
-    });
-  });
-});
-
-//ID = random - GET = obtener todos los bloques de una reserva                         
-app.get('/bloque/obtener/', function (req, res) {
-  let Idreserva = req.query.IdReserva;
-  mc.query('SELECT IdBloque FROM contiene WHERE IdReserva = ?', Idreserva, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'todas los bloques pedagogico de una reserva con id ' + Idreserva
-    });
-  });
-});
-
-
-//ID = 21 - GET = obtener alerta de desuso de aula       
-app.post('/reporte/obtener/', function (req, res) {
-  let IdSede = req.body.IdSede;
-  mc.query('SELECT aula.IdAula,aula.NomAula,datos.CapturaFotografica,datos.IdDatos, datos.Fecha FROM areatrabajo INNER JOIN aula ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN sensor ON aula.IdAula = sensor.IdAula INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Reportado = 0 AND datos.Correcto = 1 ', IdSede, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      dataLenghy: results.length,
-      data: results,
-      message: 'Obtener alerta de desuso de aula'
-    });
-  });
-});
-
-//ID = 21 - GET = obtener datos del aula en desuso       
-app.get('/reporte/obtener/datos/', function (req, res) {
-  let Dia = req.query.Dia;
-  let IdAula = req.query.IdAula;
-  let IdBloque = req.query.IdBloque;
-  mc.query('SELECT curso.IdCurso, curso.NomCurso,curso.Codigo,carrera.IdCarrera, carrera.NomCarrera FROM  contiene  INNER JOIN reserva on contiene.IdReserva = reserva.IdReserva AND reserva.DiaClases = ? AND reserva.IdAula = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE contiene.IdBloque=?', [Dia,IdAula,IdBloque], function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      dataLenghy: results.length,
-      data: results,
-      message: 'obtener datos del aula en desuso'
-    });
-  });
-});
-
-//ID = random - PUT = Afirmar o negar alerta de desuso de aula 
-app.put('/alerta/validar/', function (req, res) {
-  let IdDatos = req.body.IdDatos;
-  let validacion = req.body.validacion;
-  mc.query('UPDATE datos SET Reportado = 1, Correcto = ? WHERE datos.IdDatos = ?', [validacion, IdDatos], function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Se valido la alera de desuso de aula correctamente'
     });
   });
 });
@@ -910,45 +997,6 @@ app.get('/reporte/listado/carrera', function (req, res) {
   });
 });
 
-//ID = 23 - GET = listado de todos los reportes segun la sede 
-app.get('/reporte/listado/', function (req, res) {
-  let IdSede = req.query.IdSede;
-  mc.query('SELECT rep.IdReporte, carrera.NomCarrera, curso.NomCurso, curso.NomProfesor, rep.FechaReporte, aula.NomAula, usuario.NomUsuario, usuario.ApeUsuario, datos.CapturaFotografica, rep.IdDatos FROM reporte AS rep INNER JOIN aula ON aula.IdAula = rep.IdAula  INNER JOIN areatrabajo ON areatrabajo.IdArea = aula.IdArea AND areatrabajo.IdSede = ? INNER JOIN carrera ON carrera.IdCarrera = rep.IdCarrera  INNER JOIN usuario ON usuario.IdUsuario = rep.IdUsuario  INNER JOIN datos ON datos.IdDatos = rep.IdDatos INNER JOIN curso ON curso.IdCurso = rep.IdCurso ORDER BY rep.FechaReporte DESC', IdSede, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Listado de todos los reportes segun la sede'
-    });
-  });
-});
-
-//ID = 24 - GET = listado de todos las carreras segun la sede 
-app.get('/carreras/listado/', function (req, res) {
-  let IdSede = req.query.IdSede;
-  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'listado de todos las carreras segun la sede'
-    });
-  });
-});
-
-//ID = random - DELETE = eliminar reporte
-app.delete('/reporte/eliminar/', function (req, res) {
-  let Idreporte = req.query.Idreporte;
-  mc.query('DELETE FROM reporte WHERE Idreporte = ?', Idreporte, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Reporte eliminado correctamente'
-    });
-  });
-});
-
 //ID = random - POST = verifica si el aula esta reservada   *nada
 app.get('/aula/validacion/reserva', function (req, res) {
   let IdSensor = req.body.IdSensor;
@@ -977,37 +1025,6 @@ app.get('/reserva/Obtener/:IdReserva', function (req, res) {
   });
 });
 
-
-//ID = random - PUT = Se ha activado el campus
-app.put('/campus/activar/', function (req, res) {
-  let id = req.body.id;
-  let fecha = null;
-  mc.query('UPDATE sede SET Activa = 1, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Se ha activado el campus con id ' + id
-    });
-  });
-});
-
-//ID = random - PUT = Se ha desactivado el campus
-app.put('/campus/desactivar/', function (req, res) {
-  let id = req.body.id;
-  let fecha = new Date();
-  fecha.setHours(fecha.getHours() - 3)
-
-  mc.query('UPDATE sede SET Activa = 0, FechaActivacion = ? WHERE IdSede = ?', [fecha, id], function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Se ha desactivado el campus con id ' + id
-    });
-  });
-});
-
 //ID = random - PUT = editar estado de uso del aula         *nada
 app.put('/reserva/editar/:IdReserva', function (req, res) {
   let IdReserva = req.params.IdReserva;
@@ -1020,21 +1037,6 @@ app.put('/reserva/editar/:IdReserva', function (req, res) {
     });
   });
 });
-
-//ID = random - GET = obtener el estado de uso del aula
-app.get('/campus/Obtener/Estado/', function (req, res) {
-  let IdCampus = req.query.IdCampus;
-  mc.query('SELECT Activa FROM sede WHERE IdSede = ?', IdCampus, function (error, results, fields) {
-    if (error) throw error;
-    return res.send({
-      error: false,
-      data: results,
-      message: 'Estado del campus'
-    });
-  });
-});
-
-
 
 //ID = random - GET = obtener el estado de uso del aula
 app.get('/reserva/Obtener/:IdReserva', function (req, res) {
