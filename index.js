@@ -10,12 +10,12 @@ var bcrypt = require("bcrypt");
 const { storage } = require('./firebase');
 const { v4: uuidv4 } = require('uuid');
 
-/*
+
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 const CLIENT_SECRET = "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";
 const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04W8o4KfZQs6fCgYIARAAGAQSNwF-L9IrgPgIzQacTX8EvfJWVipUWPCDWh7Br9FLQtJEJANnSwStZJyLdC-mmhenou9AVTM-6s0";
+const REFRESH_TOKEN = "1//04Aj8RZZ8Eal-CgYIARAAGAQSNwF-L9IrLOCADbAnVDP4ej8IgpMzlydO_fVwAPp7FRh3Fsfi4a4b9KatPfS7KP1y9ntakX01Jac";
 
 const oauth2Client = new OAuth2(
   CLIENT_ID,
@@ -37,7 +37,7 @@ const smtpTransport = nodemailer.createTransport({
   }
 });
 
-*/
+
 
 const horaEjecucion = '00:00:00';
 const ahora = new Date();
