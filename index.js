@@ -10,21 +10,6 @@ var bcrypt = require("bcrypt");
 const { storage } = require('./firebase');
 const { v4: uuidv4 } = require('uuid');
 
-
-
-
-/*
-  "scripts": {
-    "start": "node index.js",
-  },
-
-    "scripts": {
-    "start":"nodemon index.js",
-  },
-*/
-
-
-
 /*
 const OAuth2 = google.auth.OAuth2;
 const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
@@ -64,7 +49,6 @@ if (tiempoRestante < 0) {
 
 setTimeout(realizarConsulta, tiempoRestante);
 
-
 function realizarConsulta() {
   const sql = 'UPDATE sede SET Activa = 1';
   mc.query(sql, (error, results) => {
@@ -74,7 +58,6 @@ function realizarConsulta() {
     }
   });
 }
-
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
@@ -102,28 +85,16 @@ const mc = mysql.createConnection({
 mc.connect();
 
 /*
-const mc = mysql.createConnection({
   host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
   user: "ux6lflejgxqlkbbd",
   password: "kvkOMAr6FXTdstO8vhk6",
   database: "bjx67tth5lqo4fhqtdjt",
-});
-mc.connect();
 
-
-const mc = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
   database: "psensores",
-});
-mc.connect();
-
-
 */
-
-// sensores
-/////////////////////////////////////////////////////////////
 
 //ID = 1 - POST = Iniciar sessión *
 app.post("/usuario/session", (req, res) => {
@@ -145,7 +116,6 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-    //if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
       if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
       let SEED = 'esta-es-una-semilla';
       let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
@@ -165,7 +135,6 @@ app.post("/usuario/session", (req, res) => {
   }
   );
 });
-
 
 //ID = random - GET = listado de datos sobre Temperatura y Humedad sin sala
 app.get('/datos/tempHumedad/:idAula', function (req, res) {
@@ -225,8 +194,6 @@ app.post('/upload', async (req, res) => {
       console.error('Error al subir el archivo:', err);
       res.status(500).send('Error al subir el archivo');
     });
-
-    
 
     stream.on('finish', async () => {
       // Hacer el archivo público
@@ -444,20 +411,6 @@ app.get('/sede/obtener/', function (req, res) {
   });
 });
 
-//ID = random - GET = Nombre de la Ciudad segun id *
-// app.get('/img', function (req, res) {
-//   const rutaAbsoluta = path.join(__dirname, '/img');
-
-//   // Verificar si la ruta es un directorio
-//   if (!fs.existsSync(rutaAbsoluta) || !fs.lstatSync(rutaAbsoluta).isDirectory()) {
-//     return res.send({
-//       error: true,
-//     });
-//   }
-
-//   // Leer el contenido de la carpeta
-
-
 //ID = random - GET = listado de sedes segun la ciudad *
 app.get('/sede/listado/', function (req, res) {
   let IdCiudad = req.query.IdCiudad;
@@ -612,11 +565,6 @@ app.post('/encargado/crear/', function (req, res) {
     });
   }
 });
-
-
-
-
-
 
 //ID = 7 - PUT = editar datos de encargado de aula 
 app.put('/encargado/editar/', (req, res) => {
