@@ -68,6 +68,7 @@ const rangosDeTiempo = [
   { fin: '12:11' },
   { fin: '13:01' },
   { fin: '13:41' },
+
   { fin: '14:31' },
   { fin: '15:11' },
   { fin: '16:01' },
@@ -78,45 +79,35 @@ const rangosDeTiempo = [
   { fin: '19:41' },
 ];
 
-const diasSemana = [1, 2, 3, 4, 5]; // De lunes a viernes
 
-// Crear la regla de horario para cada elemento en rangosDeTiempo
+const diasSemana = [1, 2, 3, 4, 5];
 rangosDeTiempo.forEach((rango, index) => {
   const horaFin = rango.fin.split(':');
   const regla = new schedule.RecurrenceRule();
   regla.dayOfWeek = diasSemana;
   regla.hour = parseInt(horaFin[0], 10);
   regla.minute = parseInt(horaFin[1], 10);
-
-  // Programar la tarea usando la regla de horario
   schedule.scheduleJob(regla, () => {
     ejecutarTarea();
   });
 });
 
 function ejecutarTarea() {
-  mc.query('SELECT COUNT(DISTINCT IdSensor) FROM datos;', function (error, countt, fields) {
+  console.log("results[0]");
+  mc.query('SELECT COUNT(DISTINCT IdSensor) AS Total FROM datos;', function (error, countt, fields) {
     if (error) throw error;
-    let i=1;
-    while(i< countt+1){
+    for(let i=1;i< countt[0]['Total']+1;i++){
       mc.query('SELECT datos.IdDatos, datos.Humedad, datos.NivelesDeCO2, datos.Temperatura, datos.Movimiento FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE datos.IdSensor = ? ORDER BY Fecha DESC LIMIT 2',i, function (error, results, fields) {
         if (error) throw error;
-        console.log(results[0]);
-        if((!results[0].Movimiento)&&((results[0].NivelesDeCO2<results[1].NivelesDeCO2)&&(results[0].Temperatura<results[1].Temperatura)&&(results[0].Humedad<=results[1].Humedad))){
+        if(results[0].Movimiento==0&&results[0].NivelesDeCO2<results[1].NivelesDeCO2&&results[0].Temperatura<results[1].Temperatura&&results[0].Humedad<=results[1].Humedad){
           mc.query('UPDATE datos SET Reportado=0, Correcto = 1 WHERE IdDatos = ?', results[0].IdDatos, function (error, resultss, fields) {
             if (error) throw error;
           });
         }
       });
-      i+1;
     }
   });
 }
-
-
-
-
-
 
 //ID = ? - POST = enviar correo de desuso de aula
 app.use(bodyParser.json());
