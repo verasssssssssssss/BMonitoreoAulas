@@ -127,18 +127,18 @@ app.use(function (req, res, next) {
 });
 
 const mc = mysql.createConnection({
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
+  host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
+  user: "u7y6gx4q2whv0mav",
+  password: "iuglVVQCQWMTqqIZgLoX",
+  database: "bum5btaryskyoamzkj0m",
 });
 mc.connect();
 
 /*
-  host: "bjx67tth5lqo4fhqtdjt-mysql.services.clever-cloud.com",
-  user: "ux6lflejgxqlkbbd",
-  password: "kvkOMAr6FXTdstO8vhk6",
-  database: "bjx67tth5lqo4fhqtdjt",
+  host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
+  user: "u7y6gx4q2whv0mav",
+  password: "iuglVVQCQWMTqqIZgLoX",
+  database: "bum5btaryskyoamzkj0m",
 
   host: "localhost",
   user: "root",
