@@ -1,22 +1,23 @@
-FROM node:latest
+FROM node:21-alpine3.17
 
-# Establecer el directorio de trabajo en el contenedor
-WORKDIR /usr/src/app
+RUN mkdir /my_app
 
-# Copiar los archivos package.json y package-lock.json
-COPY package*.json ./
+COPY index.js /my_app
 
-# Instalar dependencias
+COPY package.json /my_app
+
+COPY .env /my_app
+
+COPY firebase.js /my_app
+
+COPY myfirebase.json /my_app
+
+WORKDIR /my_app
+
+RUN apk --no-cache add --virtual build-deps build-base python3
+
 RUN npm install
 
-# Copiar el código fuente del proyecto al contenedor
-COPY . .
+EXPOSE 3026
 
-# Evita copiar archivos sensibles, asegúrate de que estén listados en .dockerignore
-# Ejemplo: node_modules, .env, *.sql, etc.
-
-# Exponer el puerto en el que la app va a correr
-EXPOSE 3000
-
-# Comando para ejecutar la aplicación
-CMD ["node", "index.js"]
+CMD node index.js

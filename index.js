@@ -126,13 +126,24 @@ app.use(function (req, res, next) {
   next();
 });
 
+
+
 const mc = mysql.createConnection({
-  host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
-  user: "u7y6gx4q2whv0mav",
-  password: "iuglVVQCQWMTqqIZgLoX",
-  database: "bum5btaryskyoamzkj0m",
+  host: '172.17.0.26',
+  port: 3306,
+  user: 'root',
+  password: 'monitoreo_admin',
+  database: 'psensores',
 });
-mc.connect();
+
+
+
+mc.connect(error => {
+  if (error) throw error;
+  console.log("Conectado exitosamente a la base de datos.");
+});
+
+
 
 /*
   host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
