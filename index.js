@@ -146,6 +146,12 @@ mc.connect(error => {
 
 
 /*
+  host: '172.17.0.26',
+  port: 3306,
+  user: 'root',
+  password: 'monitoreo_admin',
+  database: 'psensores',
+
   host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
   user: "u7y6gx4q2whv0mav",
   password: "iuglVVQCQWMTqqIZgLoX",
@@ -307,10 +313,8 @@ app.post('/enviar-datos', (req, res) => {
 
   mc.query(insertQuery, values, (err, result) => {
     if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
       res.status(500).json({ error: 'Error al insertar datos' });
     } else {
-      console.log('Datos insertados en la base de datos con éxito.');
       res.json({ message: 'Datos recibidos y almacenados correctamente.' });
     }
   });
@@ -539,7 +543,6 @@ app.post('/reserva/crear/', function (req, res) {
 app.delete('/reserva/eliminar/bloque/', function (req, res) {
   let IdReserva = req.query.IdReserva;
   let IdBloque = req.query.IdBloque;
-  console.log(IdReserva + "  " + IdBloque);
   mc.query('DELETE FROM contiene WHERE IdReserva = ? AND IdBloque = ?', [IdReserva, IdBloque], function (errorr, results, fields) {
     if (errorr) {
       res.status(500).json({ "Mensaje": "Error" });
@@ -660,7 +663,7 @@ app.get('/area/listado/', function (req, res) {
 //ID = 16 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/', function (req, res) {
   let IdArea = req.query.IdAreasDeTrabajo;
-  mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
+  mc.query('SELECT aula.IdAula, aula.NomAula, aula.CantidadAlumnos, sensor.IdSensor FROM aula LEFT JOIN sensor ON sensor.IdAula = aula.IdAula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
