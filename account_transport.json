@@ -1,0 +1,10 @@
+{
+    "service": "gmail",
+    "auth":{
+        "type": "OAuth2",
+        "user": "monitoreoaulas@gmail.com",
+        "clientId": "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com",
+        "clientSecret": "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",
+        "refreshToken": "1//04dPd1kj7MpvsCgYIARAAGAQSNwF-L9IrRw1Pfo9Udj1Pq_LroaHYMY46NmnbXETOvqYuz11qKiZHwOKt53laXLWTYXGTeadg5rk"
+    }
+}

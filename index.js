@@ -12,30 +12,63 @@ const { v4: uuidv4 } = require('uuid');
 const schedule = require('node-schedule');
 
 const OAuth2 = google.auth.OAuth2;
-const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
-const CLIENT_SECRET = "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";
-const REDIRECT_URI = "https://developers.google.com/oauthplayground";
-const REFRESH_TOKEN = "1//04Aj8RZZ8Eal-CgYIARAAGAQSNwF-L9IrLOCADbAnVDP4ej8IgpMzlydO_fVwAPp7FRh3Fsfi4a4b9KatPfS7KP1y9ntakX01Jac";
+// const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
+// const CLIENT_SECRET = "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";
+// const REDIRECT_URI = "https://developers.google.com/oauthplayground";
+// const REFRESH_TOKEN = "1//04Aj8RZZ8Eal-CgYIARAAGAQSNwF-L9IrLOCADbAnVDP4ej8IgpMzlydO_fVwAPp7FRh3Fsfi4a4b9KatPfS7KP1y9ntakX01Jac";
 
-const oauth2Client = new OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
-);
 
-oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
-const accessToken = oauth2Client.getAccessToken();
-const smtpTransport = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    type: "OAuth2",
-    user: "monitoreoaulas@gmail.com",
-    clientId: CLIENT_ID,
-    clientSecret: CLIENT_SECRET,
-    refreshToken: REFRESH_TOKEN,
-    accessToken: accessToken,
-  }
-});
+const accountTransport = require("./account_transport.json");
+
+const mail_monitoreo = async () => {
+  return new Promise((resolve, reject) => {
+    const oauth2Client = new OAuth2(
+      accountTransport.auth.clientId,
+      accountTransport.auth.clientSecret,
+      "https://developers.google.com/oauthplayground",
+    );
+
+    oauth2Client.setCredentials({
+      refresh_token: accountTransport.auth.refreshToken,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    oauth2Client.getAccessToken((err, token) => {
+      if (err) {
+        reject(err);
+      } else {
+        accountTransport.auth.accessToken = token;
+        const transport = nodemailer.createTransport(accountTransport);
+        resolve(transport);
+      }
+    });
+  });
+};
+
+
+
+
+// const oauth2Client = new OAuth2(
+//   CLIENT_ID,
+//   CLIENT_SECRET,
+//   REDIRECT_URI
+// );
+
+// oauth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
+// const accessToken = oauth2Client.getAccessToken();
+// const smtpTransport = nodemailer.createTransport({
+//   service: "gmail",
+//   auth: {
+//     type: "OAuth2",
+//     user: "monitoreoaulas@gmail.com",
+//     clientId: CLIENT_ID,
+//     clientSecret: CLIENT_SECRET,
+//     refreshToken: REFRESH_TOKEN,
+//     accessToken: accessToken,
+//   }
+// });
 
 
 
@@ -96,10 +129,10 @@ function ejecutarTarea() {
   console.log("results[0]");
   mc.query('SELECT COUNT(DISTINCT IdSensor) AS Total FROM datos;', function (error, countt, fields) {
     if (error) throw error;
-    for(let i=1;i< countt[0]['Total']+1;i++){
-      mc.query('SELECT datos.IdDatos, datos.Humedad, datos.NivelesDeCO2, datos.Temperatura, datos.Movimiento FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE datos.IdSensor = ? ORDER BY Fecha DESC LIMIT 2',i, function (error, results, fields) {
+    for (let i = 1; i < countt[0]['Total'] + 1; i++) {
+      mc.query('SELECT datos.IdDatos, datos.Humedad, datos.NivelesDeCO2, datos.Temperatura, datos.Movimiento FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE datos.IdSensor = ? ORDER BY Fecha DESC LIMIT 2', i, function (error, results, fields) {
         if (error) throw error;
-        if(results[0].Movimiento==0&&results[0].NivelesDeCO2<results[1].NivelesDeCO2&&results[0].Temperatura<results[1].Temperatura&&results[0].Humedad<=results[1].Humedad){
+        if (results[0].Movimiento == 0 && results[0].NivelesDeCO2 < results[1].NivelesDeCO2 && results[0].Temperatura < results[1].Temperatura && results[0].Humedad <= results[1].Humedad) {
           mc.query('UPDATE datos SET Reportado=0, Correcto = 1 WHERE IdDatos = ?', results[0].IdDatos, function (error, resultss, fields) {
             if (error) throw error;
           });
@@ -176,7 +209,7 @@ app.post("/usuario/session", (req, res) => {
         errors: err,
       });
     }
-      if ( bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
+    if (bcrypt.compareSync(Contrasenia, results[0].Contrasenia)) {
       let SEED = 'esta-es-una-semilla';
       let token = jwt.sign({ usuario: results[0].Contrasenia }, SEED, { expiresIn: 86400 });
       return res.status(200).json({
@@ -199,7 +232,7 @@ app.post("/usuario/session", (req, res) => {
 //ID = 2- GET = listado de datos sobre Temperatura y Humedad de una determinada aula
 app.get('/datos/tempHum/:idAula', function (req, res) {
   let idAula = req.params.idAula;
-  mc.query('SELECT datos.Fecha, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
+  mc.query('SELECT datos.Fecha, datos.Temperatura, datos.Humedad FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10', idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -213,7 +246,7 @@ app.get('/datos/tempHum/:idAula', function (req, res) {
 app.get('/datos/co2tvoc/:idAula', function (req, res) {
   let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT datos.Fecha, datos.NivelesDeCO2, datos.Tvoc FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 7',idAula, function (error, results, fields) {
+  mc.query('SELECT datos.Fecha, datos.NivelesDeCO2, datos.Tvoc FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 7', idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -227,7 +260,7 @@ app.get('/datos/co2tvoc/:idAula', function (req, res) {
 app.get('/datos/Iluminica/:idAula', function (req, res) {
   let idAula = req.params.idAula;
   //SELECT Fecha,NivelesDeCO2, Tvoc FROM datos WHERE DATE(Fecha) = CURDATE() ORDER BY Fecha DESC LIMIT 10
-  mc.query('SELECT datos.Fecha, datos.IntensidadLuminica FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10',idAula, function (error, results, fields) {
+  mc.query('SELECT datos.Fecha, datos.IntensidadLuminica FROM datos INNER JOIN sensor ON datos.IdSensor = sensor.IdSensor WHERE sensor.IdAula = ? ORDER BY Fecha DESC LIMIT 10', idAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -243,7 +276,7 @@ app.use('/upload', express.raw({ type: 'image/*', limit: '10mb' }));
 app.post('/upload', async (req, res) => {
   const bucket = storage.bucket('gs://bmonitoreo-d0403.appspot.com');
   const nombreArchivo = uuidv4() + '.jpg';
-  
+
   try {
     const file = bucket.file(nombreArchivo);
     const stream = file.createWriteStream({
@@ -358,26 +391,32 @@ app.post('/reporte/crear/', function (req, res) {
 });
 
 //ID = 8 - POST = enviar correo de desuso de aula
-app.post("/EnviarCorreo/", (req, res) => {
-  let datoscorreo = {
-    to: req.body.to,
-    NomDirector: req.body.NomDirector,
-    ApeDirector: req.body.ApeDirector,
-    NomSede: req.body.NomSede,
-    NomCurso: req.body.NomCurso,
-    Codigo: req.body.Codigo,
-    FechaReporte: req.body.FechaReporte,
-    NomCarrera: req.body.NomCarrera,
-    NomEncargado: req.body.NomEncargado,
-    NomAula: req.body.NomAula,
-    CapturaFotografica: req.body.CapturaFotografica,
-  };
+app.post("/EnviarCorreo/", async (req, res) => {
 
-  if (!datoscorreo.to) {
-    return res.status(400).send("Ingrese un correo destinatario válido.");
-  }
+  try {
+    const smtpTransport = await mail_monitoreo();
 
-  let msg = `<html lang="es">
+    let datoscorreo = {
+      to: req.body.to,
+      NomDirector: req.body.NomDirector,
+      ApeDirector: req.body.ApeDirector,
+      NomSede: req.body.NomSede,
+      NomCurso: req.body.NomCurso,
+      Codigo: req.body.Codigo,
+      FechaReporte: req.body.FechaReporte,
+      NomCarrera: req.body.NomCarrera,
+      NomEncargado: req.body.NomEncargado,
+      NomAula: req.body.NomAula,
+      CapturaFotografica: req.body.CapturaFotografica,
+    };
+
+
+    if (!datoscorreo.to) {
+      return res.status(400).send("Ingrese un correo destinatario válido.");
+    }
+
+
+    let msg = `<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -444,22 +483,27 @@ app.post("/EnviarCorreo/", (req, res) => {
 </body>
 </html>`;
 
-  const mailOptions = {
-    from: "Sistema de monitoreo de aulas UBB <monitoreoaulas@gmail.com>",
-    to: datoscorreo.to,
-    subject: "Notificacion de desuso de aula " + datoscorreo.NomAula,
-    generateTextFromHTML: true,
-    html: msg
-  };
+    const mailOptions = {
+      from: "Sistema de monitoreo de aulas UBB <monitoreoaulas@gmail.com>",
+      to: datoscorreo.to,
+      subject: "Notificacion de desuso de aula " + datoscorreo.NomAula,
+      generateTextFromHTML: true,
+      html: msg
+    };
 
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    if (error) {
-      res.status(500).send("Error al enviar el correo.");
-    } else {
-      res.send("Correo enviado correctamente.");
-    }
-    smtpTransport.close();
-  });
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      if (error) {
+        res.status(500).send("Error al enviar el correo.");
+      } else {
+        res.send("Correo enviado correctamente.");
+      }
+      smtpTransport.close();
+    });
+
+  } catch (error) {
+    console.error("Error al obtener el transporte SMTP:", error);
+    res.status(500).send("Error al obtener el transporte SMTP.");
+  }
 });
 
 //ID = 9 - GET = Nombre de la Ciudad segun id *
@@ -568,7 +612,7 @@ app.get('/aula/listado/', function (req, res) {
     });
   });
 });
-               
+
 //ID = 17 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/sede/', function (req, res) {
   let IdSede = req.query.IdSede;
@@ -792,7 +836,7 @@ app.get('/reporte/datos/', function (req, res) {
   let Dia = req.query.Dia;
   let IdAula = req.query.IdAula;
   let IdBloque = req.query.IdBloque;
-  mc.query('SELECT curso.IdCurso, curso.NomCurso,curso.Codigo,carrera.IdCarrera, carrera.NomCarrera FROM  contiene  INNER JOIN reserva on contiene.IdReserva = reserva.IdReserva AND reserva.DiaClases = ? AND reserva.IdAula = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE contiene.IdBloque=?', [Dia,IdAula,IdBloque], function (error, results, fields) {
+  mc.query('SELECT curso.IdCurso, curso.NomCurso,curso.Codigo,carrera.IdCarrera, carrera.NomCarrera FROM  contiene  INNER JOIN reserva on contiene.IdReserva = reserva.IdReserva AND reserva.DiaClases = ? AND reserva.IdAula = ? INNER JOIN curso ON reserva.IdCurso = curso.IdCurso INNER JOIN carrera ON carrera.IdCarrera = curso.IdCarrera WHERE contiene.IdBloque=?', [Dia, IdAula, IdBloque], function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -915,8 +959,8 @@ app.get('/encargado/listado', function (req, res) {
   });
 });
 
- //ID = 28 - POST = Registar un nuevo sensor 
- app.post('/sensor/crear', function (req, res) {
+//ID = 28 - POST = Registar un nuevo sensor 
+app.post('/sensor/crear', function (req, res) {
   let datosSensor = {
     FechaInstalacion: req.body.FechaInstalacion,
     FechaMantenimiento: req.body.FechaInstalacion,
