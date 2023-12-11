@@ -11,6 +11,7 @@ const { storage } = require('./firebase');
 const { v4: uuidv4 } = require('uuid');
 const schedule = require('node-schedule');
 
+/*
 const OAuth2 = google.auth.OAuth2;
 // const CLIENT_ID = "501116274914-hm1ghv43pdfcb7jhnh9uhonils0lvib8.apps.googleusercontent.com";
 // const CLIENT_SECRET = "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";
@@ -126,7 +127,6 @@ rangosDeTiempo.forEach((rango, index) => {
 });
 
 function ejecutarTarea() {
-  console.log("results[0]");
   mc.query('SELECT COUNT(DISTINCT IdSensor) AS Total FROM datos;', function (error, countt, fields) {
     if (error) throw error;
     for (let i = 1; i < countt[0]['Total'] + 1; i++) {
@@ -179,6 +179,12 @@ mc.connect(error => {
 
 
 /*
+  host: '172.17.0.26',
+  port: 3306,
+  user: 'root',
+  password: 'monitoreo_admin',
+  database: 'psensores',
+
   host: "bum5btaryskyoamzkj0m-mysql.services.clever-cloud.com",
   user: "u7y6gx4q2whv0mav",
   password: "iuglVVQCQWMTqqIZgLoX",
@@ -340,10 +346,8 @@ app.post('/enviar-datos', (req, res) => {
 
   mc.query(insertQuery, values, (err, result) => {
     if (err) {
-      console.error('Error al insertar datos en la base de datos: ' + err.message);
       res.status(500).json({ error: 'Error al insertar datos' });
     } else {
-      console.log('Datos insertados en la base de datos con éxito.');
       res.json({ message: 'Datos recibidos y almacenados correctamente.' });
     }
   });
@@ -519,6 +523,106 @@ app.get('/sede/obtener/', function (req, res) {
   });
 });
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - GET = Cursos existentes en la sede
+app.get('/curso/obtener/xsede/', function (req, res) {
+  let IdSede = req.query.IdSede;
+  mc.query('SELECT curso.IdCurso, curso.NomCurso ,curso.IdCarrera FROM curso INNER JOIN carrera ON curso.IdCarrera = carrera.IdCarrera INNER JOIN posee ON curso.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Carreras de segun la Sede'
+    });
+  });
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - POST = crear area de trabajo *
+app.post('/reserva/crear/', function (req, res) {
+  let datosReserva = {
+    DiaClases: req.body.DiaClases,
+    EnUso: 1,
+    FechaLimite: req.body.FechaLimite,
+    IdCurso: req.body.IdCurso,
+    IdAula: req.body.IdAula,
+    IdSede: req.body.IdSede,
+  };
+
+  let IdBloqueInicio = req.body.IdBloqueInicio;
+  let IdBloqueFin = (req.body.IdBloqueFin + IdBloqueInicio);
+
+  let datosContiene = {
+    IdReserva: 0,
+    IdBloque: 0,
+  };
+  if (mc) {
+    mc.query("INSERT INTO reserva SET ?", datosReserva, function (error, results) {
+      if (error) {
+        res.status(500).json({ "Mensaje": "Error" });
+      } else {
+        mc.query("SELECT IdReserva FROM reserva ORDER BY IdReserva DESC LIMIT 1", function (error, resultss) {
+          if (error) {
+            res.status(500).json({ "Mensaje": "Error" });
+          } else {
+            datosContiene.IdReserva = resultss[0].IdReserva;
+            for (IdBloqueInicio; IdBloqueInicio < IdBloqueFin; IdBloqueInicio++) {
+              datosContiene.IdBloque = IdBloqueInicio;
+              mc.query("INSERT INTO contiene SET ?", datosContiene, function (error, results) {
+                if (error) {
+                  res.status(500).json({ "Mensaje": "Error" });
+                }
+              });
+            }
+            return res.status(200).json({ "Mensaje": "Reserva ingresada" });
+          }
+        });
+      }
+    });
+  }
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - DELETE = eleminar reserva por bloque
+app.delete('/reserva/eliminar/bloque/', function (req, res) {
+  let IdReserva = req.query.IdReserva;
+  let IdBloque = req.query.IdBloque;
+  mc.query('DELETE FROM contiene WHERE IdReserva = ? AND IdBloque = ?', [IdReserva, IdBloque], function (errorr, results, fields) {
+    if (errorr) {
+      res.status(500).json({ "Mensaje": "Error" });
+    } else {
+      res.status(200).json({ "Mensaje": "Reserva eliminada" });
+    }
+  });
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - DELETE = eleminar reserva
+app.delete('/reserva/eliminar/', function (req, res) {
+  let IdReserva = req.query.IdReserva;
+  mc.query('DELETE FROM reserva WHERE IdReserva = ?', IdReserva, function (error, results, fields) {
+    if (error) {
+      res.status(500).json({ "Mensaje": "Error" });
+    }else{
+      res.status(200).json({ "Mensaje": "Reserva eliminada" });
+    }
+  });
+});
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - GET = obtener datos de los sensores
+app.get('/sensores/monitorear/', function (req, res) {
+  let IdSede = req.query.IdSede;
+  mc.query('SELECT sensor.IdSensor, aula.NomAula, datos.Fecha, datos.IntensidadLuminica, datos.NivelesDeCO2, datos.Tvoc, datos.Temperatura, datos.Humedad, datos.Movimiento FROM sensor INNER JOIN ( SELECT IdSensor, MAX(Fecha) AS MaxFecha FROM datos GROUP BY IdSensor ) ultima_fecha ON sensor.IdSensor = ultima_fecha.IdSensor INNER JOIN datos ON sensor.IdSensor = datos.IdSensor AND datos.Fecha = ultima_fecha.MaxFecha INNER JOIN aula ON sensor.IdAula = aula.IdAula INNER JOIN areatrabajo ON aula.IdArea = areatrabajo.IdArea INNER JOIN sede ON sede.IdSede = areatrabajo.IdSede WHERE aula.Visible = 1 AND areatrabajo.Visible = 1 AND sede.IdSede = ? LIMIT 4', IdSede, function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'Carreras de segun la Sede'
+    });
+  });
+});
+
 //ID = 10 - GET = listado de sedes segun la ciudad *
 app.get('/campus/listado/', function (req, res) {
   let IdCiudad = req.query.IdCiudad;
@@ -603,7 +707,7 @@ app.get('/area/listado/', function (req, res) {
 //ID = 16 - GET = listado de todas las aulas de un área *
 app.get('/aula/listado/', function (req, res) {
   let IdArea = req.query.IdAreasDeTrabajo;
-  mc.query('SELECT * FROM aula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
+  mc.query('SELECT aula.IdAula, aula.NomAula, aula.CantidadAlumnos, sensor.IdSensor FROM aula LEFT JOIN sensor ON sensor.IdAula = aula.IdAula WHERE IdArea = ? AND aula.Visible = 1', IdArea, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -794,7 +898,7 @@ app.put('/aula/eliminar/', (req, res) => {
 //ID = random - 28 = obtener todas las reservas de una aula                            
 app.get('/reserva/poraula/', function (req, res) {
   let IdAula = req.query.IdAula;
-  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor, curso.Codigo FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite > CURDATE()', IdAula, function (error, results, fields) {
+  mc.query('SELECT reserva.IdReserva, reserva.DiaClases, reserva.IdAula, reserva.FechaLimite, curso.IdCurso, curso.NomCurso, curso.NomProfesor, curso.Codigo FROM reserva INNER JOIN curso ON reserva.IdCurso = curso.IdCurso AND reserva.IdAula = ? WHERE reserva.FechaLimite >= CURDATE()', IdAula, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
