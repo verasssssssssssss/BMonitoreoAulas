@@ -12,6 +12,8 @@ COPY firebase.js /my_app
 
 COPY myfirebase.json /my_app
 
+COPY account_transport.json /my_app
+
 WORKDIR /my_app
 
 RUN apk --no-cache add --virtual build-deps build-base python3
