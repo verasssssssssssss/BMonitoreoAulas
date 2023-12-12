@@ -324,7 +324,7 @@ app.post('/enviar-datos', (req, res) => {
   const move = req.body.movimiento;
   const foto = req.body.imageUrl;
   const idSensor = req.body.idSensor;     // Obtener el ID del sensor desde el request body
-
+  const fecha = req.body.idSensor;     // Obtener el ID del sensor desde el request body
   // Inserta los datos en la tabla "datos"
   const insertQuery = `
     INSERT INTO datos (
@@ -350,6 +350,65 @@ app.post('/enviar-datos', (req, res) => {
     } else {
       res.json({ message: 'Datos recibidos y almacenados correctamente.' });
     }
+  });
+});
+
+/* posible solución de hora correcta
+
+//ID = 6 - POST = recopliar datos de los sensores
+app.post('/enviar-datos', (req, res) => {
+  const temperature = req.body.temperature;
+  const humidity = req.body.humidity;
+  const luminosity = req.body.luminosity; // Valor de intensidad lumínica
+  const co2Level = req.body.co2Level;     // Valor de niveles de CO2
+  const tvoc = req.body.tvoc;             // Valor de TVOC enviado por el sensor de CO2 y TVOC
+  const move = req.body.movimiento;
+  const foto = req.body.imageUrl;
+  const idSensor = req.body.idSensor;     // Obtener el ID del sensor desde el request body
+  let fecha = new Date();
+  fecha.setHours(fecha.getHours() - 3);
+
+  const insertQuery = `
+    INSERT INTO datos (
+      Fecha, 
+      Reportado, 
+      Correcto, 
+      IntensidadLuminica, 
+      NivelesDeCO2, 
+      Tvoc, 
+      Temperatura, 
+      Humedad,
+      Movimiento, 
+      CapturaFotografica, 
+      IdSensor
+    ) VALUES (?, 0, 0, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  // Valores para la inserción en la base de datos
+  const values = [fecha, luminosity, co2Level, tvoc, temperature, humidity, move, foto, idSensor];
+
+  mc.query(insertQuery, values, (err, result) => {
+    if (err) {
+      res.status(500).json({ error: 'Error al insertar datos' });
+    } else {
+      res.json({ message: 'Datos recibidos y almacenados correctamente.' });
+    }
+  });
+});
+
+
+*/
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//ID = random - GET = obtener datos de los sensores
+app.get('/aula/listado/todos/', function (req, res) {
+  mc.query('SELECT aula.IdAula, aula.NomAula FROM aula INNER JOIN sensor ON sensor.IdAula = aula.IdAula WHERE aula.Visible = 1', function (error, results, fields) {
+    if (error) throw error;
+    return res.send({
+      error: false,
+      data: results,
+      message: 'listado de todas las aulas con sensores'
+    });
   });
 });
 
