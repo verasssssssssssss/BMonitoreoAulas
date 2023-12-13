@@ -586,7 +586,7 @@ app.get('/sede/obtener/', function (req, res) {
 //ID = random - GET = Cursos existentes en la sede
 app.get('/curso/obtener/xsede/', function (req, res) {
   let IdSede = req.query.IdSede;
-  mc.query('SELECT curso.IdCurso, curso.NomCurso ,curso.IdCarrera FROM curso INNER JOIN carrera ON curso.IdCarrera = carrera.IdCarrera INNER JOIN posee ON curso.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
+  mc.query('SELECT curso.IdCurso, curso.NomCurso ,curso.IdCarrera, curso.Codigo FROM curso INNER JOIN carrera ON curso.IdCarrera = carrera.IdCarrera INNER JOIN posee ON curso.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
@@ -1040,7 +1040,7 @@ app.get('/reporte/listado/', function (req, res) {
 //ID = 34 - GET = listado de todos las carreras segun la sede 
 app.get('/carreras/listado/', function (req, res) {
   let IdSede = req.query.IdSede;
-  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
+  mc.query('SELECT carrera.IdCarrera, carrera.NomCarrera, carrera.Codigo FROM carrera INNER JOIN posee ON carrera.IdCarrera = posee.IdCarrera AND posee.IdSede = ?', IdSede, function (error, results, fields) {
     if (error) throw error;
     return res.send({
       error: false,
