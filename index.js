@@ -98,6 +98,7 @@ const rangosDeTiempo = [
   { fin: '09:11' },
   { fin: '10:01' },
   { fin: '10:41' },
+  { fin: '10:30' },
   { fin: '11:31' },
   { fin: '12:11' },
   { fin: '13:01' },
@@ -162,11 +163,10 @@ app.use(function (req, res, next) {
 
 
 const mc = mysql.createConnection({
-  host: '172.17.0.26',
-  port: 3306,
-  user: 'root',
-  password: 'monitoreo_admin',
-  database: 'psensores',
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "psensores",
 });
 
 
@@ -605,9 +605,7 @@ app.post('/reserva/crear/', function (req, res) {
     FechaLimite: req.body.FechaLimite,
     IdCurso: req.body.IdCurso,
     IdAula: req.body.IdAula,
-    IdSede: req.body.IdSede,
   };
-
   let IdBloqueInicio = req.body.IdBloqueInicio;
   let IdBloqueFin = (req.body.IdBloqueFin + IdBloqueInicio);
 
@@ -622,6 +620,7 @@ app.post('/reserva/crear/', function (req, res) {
       } else {
         mc.query("SELECT IdReserva FROM reserva ORDER BY IdReserva DESC LIMIT 1", function (error, resultss) {
           if (error) {
+            console.log("entra error1")
             res.status(500).json({ "Mensaje": "Error" });
           } else {
             datosContiene.IdReserva = resultss[0].IdReserva;
@@ -629,11 +628,12 @@ app.post('/reserva/crear/', function (req, res) {
               datosContiene.IdBloque = IdBloqueInicio;
               mc.query("INSERT INTO contiene SET ?", datosContiene, function (error, results) {
                 if (error) {
+                  console.log("entra error")
                   res.status(500).json({ "Mensaje": "Error" });
                 }
               });
             }
-            return res.status(200).json({ "Mensaje": "Reserva ingresada" });
+            return res.status(200).json({ "Mensaje": "Reserva ingresada" });  
           }
         });
       }
@@ -1121,6 +1121,7 @@ app.get('/curso/obtener/xsede/', function (req, res) {
 
 //ID = 40 - POST = crear area de trabajo *
 app.post('/reserva/crear/', function (req, res) {
+  console.log("hola");
   let datosReserva = {
     DiaClases: req.body.DiaClases,
     EnUso: 1,
